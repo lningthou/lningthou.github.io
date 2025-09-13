@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 1 – Images of the Russian Empire</title>
+  <meta name="description" content="Project 1: Colorizing the Prokudin‑Gorskii photo collection – approach, and results." />
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: #111317;
+      --muted: #aab2c0;
+      --text: #e6edf3;
+      --accent: #66c0f4;
+      --grid-gap: 14px;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: linear-gradient(180deg, #0a0c10 0%, #0b0c10 100%);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    header {
+      backdrop-filter: saturate(130%) blur(8px);
+      background: rgba(10,12,16,0.7);
+      border-bottom: 1px solid #1f232b;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 22px; }
+    h1 { font-size: clamp(28px, 3vw, 40px); letter-spacing: 0.2px; margin: 6px 0 4px; }
+    h2 { font-size: clamp(20px, 2.2vw, 28px); margin: 26px 0 10px; }
+    h3 { margin: 18px 0 8px; font-size: 18px; color: var(--accent); }
+    p { color: var(--text); opacity: 0.94; }
+    .muted { color: var(--muted); }
+    .card { background: var(--card); border: 1px solid #1f232b; border-radius: var(--radius); padding: 18px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .hero {
+      display: grid; gap: 10px; align-items: center;
+      grid-template-columns: 1fr;
+    }
+    .hero p { margin: 0; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted);
+      padding: 6px 10px; border-radius: 999px; border: 1px solid #1f232b; background: rgba(255,255,255,0.02);
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--grid-gap);
+    }
+    figure { margin: 0; }
+    figcaption { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    img { display: block; width: 100%; height: auto; border-radius: 0; border: none; }
+    .row { display: flex; flex-wrap: wrap; gap: var(--grid-gap); }
+    .row > * { flex: 1 1 280px; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #18202b; color: var(--accent); font-size: 12px; border: 1px solid #243142; }
+    .kbd { font: inherit; background: #0d1117; border: 1px solid #2d333b; padding: 2px 6px; border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; border-bottom: 1px solid #232a33; text-align: left; font-size: 14px; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+    .footer { margin: 40px 0 20px; font-size: 13px; color: var(--muted); }
+    a { color: var(--accent); }
+    @media (min-width: 800px) {
+      .hero { grid-template-columns: 1.2fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div>
+          <div class="tag">CS180 • Project 1 • Colorizing Prokudin‑Gorskii</div>
+          <h1>Images of the Russian Empire</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Part 1: Overview & Approach -->
+    <section class="card">
+      <h2>Part 1 — Overview &amp; Approach</h2>
+      <p>
+        The original glass plates are scanned as a single grayscale image with three vertically stacked exposures captured through blue, green, and red filters. I split the plate into three equal slices, then aligned <strong>G</strong> and <strong>R</strong> to <strong>B</strong> using translation only.
+      </p>
+    
+      <h3>Similarity Metric</h3>
+      <p>
+        To decide whether two channels are well aligned, I needed a similarity metric. I started with <em>Normalized Cross-Correlation (NCC)</em>. NCC compares two images by measuring how well their pixel intensities vary together, while normalizing by the overall energy of each image. Intuitively, if two channels line up well, their bright and dark regions will match, producing a high correlation score. If they are misaligned, the score is lower.
+      </p>
+      <p>
+        However, I noticed that my channel alignments using NCC were poor on images where the brightness of the three channels differed significantly.
+      </p>
+      <p>
+        To fix this, I used <em>Zero-mean NCC (ZNCC)</em>, which subtracts the mean intensity from each channel before computing the score. This makes the metric less sensitive to brightness offsets, since only the relative variations (edges, textures, structures) are compared. After switching to ZNCC, alignments improved noticeably in cases with channel brightness differences.
+      </p>
+      <p>
+        I also cropped out a 10% border on all sides and computed ZNCC only on the central 80% of the image. This avoids border noise from the scans and artifacts introduced by my usage of <code>np.roll</code>, which wraps edges around.
+      </p>
+    
+      <h3>Search Strategy</h3>
+      <h4>Single-Scale Alignment</h4>
+      <p>
+        For the smaller JPEG images, I use a straightforward brute force approach. I define a search window of possible displacements <code>[−d, d]</code> in both the x and y directions, roll the moving channel by each candidate shift, and compute the ZNCC score on the cropped inner region. The shift with the best score is chosen. Since the images are small, this exhaustive search is computationally feasible and reliably finds the correct alignment.
+      </p>
+
+      <h4>Multi-Scale Alignment</h4>
+      <p>
+        For the larger .tif images, brute force over all displacements is too expensive. Instead, I use a coarse-to-fine pyramid strategy. I first downsample both channels to create a smaller version of the image. At this coarse level, I run the same brute force search to estimate a rough alignment. Then, I scale this displacement up (by a factor of two) and apply it to the higher-resolution image. Around this upsampled shift, I run a small local search to refine the alignment. This process repeats until I reach the full-resolution image, where only a small correction is needed. In practice, this makes the alignment efficient while still achieving high accuracy. This was easily implemented using recursion.
+      </p>
+    </section>    
+
+    <!-- Part 2: Results -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 2 — Results</h2>
+
+      <h3>Single-scale Alignment</h3>
+      <div class="row">
+        <figure>
+          <img src="/images/1/ss_colorized_tobolsk.jpg" alt="Tobolsk (colorized)" />
+          <figcaption>Tobolsk — G->B (3, 3) R->B (3, 6)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ss_colorized_cathedral.jpg" alt="Cathedral (colorized)" />
+          <figcaption>Cathedral — G->B (2, 5) R->B (3, 12)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ss_colorized_monastery.jpg" alt="Monastery (colorized)" />
+          <figcaption>Monastery — G->B (2, -3) R->B (2, 3)</figcaption>
+        </figure>
+      </div>
+
+      <h3 style="margin-top:22px;">Multi-scale Pyramid Alignment</h3>
+      <div class="grid">
+        <figure>
+          <img src="/images/1/ms_colorized_church.jpg" alt="Church — colorized" />
+          <figcaption>Church — G->B (4, 25) R->B (-4, 58)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_emir.jpg" alt="Emir — colorized" />
+          <figcaption>Emir — G->B (24, 49) R->B (56, 104)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_harvesters.jpg" alt="Harvesters — colorized" />
+          <figcaption>Harvesters — G->B (16, 60) R->B (13, 124)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_icon.jpg" alt="Icon — colorized" />
+          <figcaption>Icon — G->B (17, 41) R->B (23, 89)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_italil.jpg" alt="Italil — colorized" />
+          <figcaption>Italil — G->B (21, 38) R->B (35, 76)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_lastochikino.jpg" alt="Lastochikino — colorized" />
+          <figcaption>Lastochikino — G->B (-2, -3) R->B (-9, 75)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_lugano.jpg" alt="Lugano — colorized" />
+          <figcaption>Lugano — G->B (-16, 41) R->B (-29, 93)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_melons.jpg" alt="Melons — colorized" />
+          <figcaption>Melons — G->B (11, 82) R->B (14, 124)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_self_portrait.jpg" alt="Self Portrait — colorized" />
+          <figcaption>Self Portrait — G->B (29, 79) R->B (39, 124)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_siren.jpg" alt="Siren — colorized" />
+          <figcaption>Siren — G->B (-6, 49) R->B (-25, 96)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_three_generations.jpg" alt="Three Generations — colorized" />
+          <figcaption>Three Generations — G->B (14, 53) R->B (11, 112)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_napoleon.jpg" alt="Napoleon — colorized" />
+          <figcaption>Napoleon — G->B (5, 63) R->B (-1, 124)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_painting.jpg" alt="Painting — colorized" />
+          <figcaption>Painting — G->B (25, 35) R->B (38, 51)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/1/ms_colorized_four_people.jpg" alt="Four People — colorized" />
+          <figcaption>Four People — G->B (-13, 47) R->B (-42, 85)</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="footer">
+      <p>Course: CS180 — Intro to Computer Vision & Computational Photography • Project 1</p>
+      <p><a href="../index.html">Back to Projects</a></p>
+    </section>
+  </main>
+</body>
+</html>
