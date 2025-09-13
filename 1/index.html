@@ -107,7 +107,10 @@
 
       <h4>Multi-Scale Alignment</h4>
       <p>
-        For the larger .tif images, brute force over all displacements is too expensive. Instead, I use a coarse-to-fine pyramid strategy. I first downsample both channels to create a smaller version of the image. At this coarse level, I run the same brute force search to estimate a rough alignment. Then, I scale this displacement up (by a factor of two) and apply it to the higher-resolution image. Around this upsampled shift, I run a small local search to refine the alignment. This process repeats until I reach the full-resolution image, where only a small correction is needed. In practice, this makes the alignment efficient while still achieving high accuracy. This was easily implemented using recursion.
+        For the larger .tif images, brute force over all displacements is too expensive. Instead, I use a coarse-to-fine pyramid strategy. I first downsample both channels to create a smaller version of the image. At this coarse level, I run the same brute force search to estimate a rough alignment. Then, I scale this displacement up (by a factor of two) and apply it to the higher-resolution image. Around this upsampled shift, I run a local search to refine the alignment. This process repeats until I reach the full-resolution image, where only a small correction is needed. In practice, this makes the alignment efficient while still achieving high accuracy. This was easily implemented using recursion.
+      </p>
+      <p>
+        Using a constant displacement window size at each pyramid level worked well for nearly all images. However, I found that for <code>melons.tif</code> and <code>self_portrait.tif</code>, alignment was noticeably better when the displacement window doubled each time I halved the resolution. The reason is that at coarser levels, the same pixel shift represents a larger motion in the original image, so keeping the search window fixed can miss the true alignment. Allowing the displacement range to grow proportionally at coarser scales makes the pyramid more robust to large misalignments present in the full-resolution images.
       </p>
     </section>    
 
