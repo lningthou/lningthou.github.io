@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.min.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 2 – Fun with Filters & Frequencies</title>
+  <meta name="description" content="Project 2: Fun with Filters & Frequencies — explanations, methods, and results." />
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: #111317;
+      --muted: #aab2c0;
+      --text: #e6edf3;
+      --accent: #66c0f4;
+      --grid-gap: 14px;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: linear-gradient(180deg, #0a0c10 0%, #0b0c10 100%);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    header {
+      backdrop-filter: saturate(130%) blur(8px);
+      background: rgba(10,12,16,0.7);
+      border-bottom: 1px solid #1f232b;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 22px; }
+    h1 { font-size: clamp(28px, 3vw, 40px); letter-spacing: 0.2px; margin: 6px 0 4px; }
+    h2 { font-size: clamp(20px, 2.2vw, 28px); margin: 26px 0 10px; }
+    h3 { margin: 18px 0 8px; font-size: 18px; color: var(--accent); }
+    p { color: var(--text); opacity: 0.94; }
+    .muted { color: var(--muted); }
+    .card { background: var(--card); border: 1px solid #1f232b; border-radius: var(--radius); padding: 18px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .hero {
+      display: grid; gap: 10px; align-items: center;
+      grid-template-columns: 1fr;
+    }
+    .hero p { margin: 0; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted);
+      padding: 6px 10px; border-radius: 999px; border: 1px solid #1f232b; background: rgba(255,255,255,0.02);
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--grid-gap);
+    }
+    figure { margin: 0; }
+    figcaption { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    img { display: block; width: 100%; height: auto; border-radius: 0; border: none; }
+    .row { display: flex; flex-wrap: wrap; gap: var(--grid-gap); }
+    .row > * { flex: 1 1 280px; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #18202b; color: var(--accent); font-size: 12px; border: 1px solid #243142; }
+    .kbd { font: inherit; background: #0d1117; border: 1px solid #2d333b; padding: 2px 6px; border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; border-bottom: 1px solid #232a33; text-align: left; font-size: 14px; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+    .footer { margin: 40px 0 20px; font-size: 13px; color: var(--muted); }
+    a { color: var(--accent); }
+    @media (min-width: 800px) {
+      .hero { grid-template-columns: 1.2fr 1fr; }
+    }
+    pre code[class*="language-"],
+    pre code,
+    pre,
+    code,
+    .hljs {
+    font-size: 13px;
+    line-height: 1.5;
+    }
+  </style>
+  
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div>
+          <div class="tag">CS180 • Project 2 • Fun with Filters & Frequencies</div>
+          <h1>Fun with Filters & Frequencies</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Part 1: Fun with Filters -->
+    <section class="card">
+      <h2>Part 1 — Fun with Filters</h2>
+
+      <!-- 1.1 Convolutions from Scratch -->
+      <h3>Part 1.1 — Convolutions from Scratch!</h3>
+      <p>My convolution functions take in an image and a kernel. First, the kernel <code>(kw x kh)</code> is flipped horizontally and vertically. Next, the image is padded by <code>(kw - 1)/2</code> zeros on the left/right and by <code>(kh - 1)/2</code> zeros on the top/bottom. Finally, we slide the kernel across each valid position of the padded image and write each weighted sum to the corresponding position of the output image.</p>
+      <p>The four loop implementation loops across each valid row/column pair of the padded image that acts as the center for the kernel in the current slide. An additional two loops are used to multiply the row/column pairs of the kernel and the corresponding window of the padded image and accumulate the sum we write to the output image. The four loop implementation can be seen below:</p>
+      <pre><code class="language-python">
+def convolve_4(image, kernel):
+    kernel = np.flipud(np.fliplr(kernel))
+    pad_y, pad_x = (kernel.shape[0]-1)//2, (kernel.shape[1]-1)//2
+    padded_image = np.pad(image, pad_width=((pad_y, pad_y), (pad_x, pad_x)), mode='constant', constant_values=0)
+    output_image = np.zeros((image.shape[0], image.shape[1]))
+    for row in range(pad_y, padded_image.shape[0] - pad_y):
+        for col in range(pad_x, padded_image.shape[1] - pad_x):
+        total_sum = 0
+        for i in range(row - pad_y, row + pad_y + 1):
+            for j in range(col - pad_x, col + pad_x + 1):
+            total_sum += padded_image[i, j] * kernel[i - (row - pad_y), j - (col - pad_x)]
+        output_image[row - pad_y, col - pad_x] = total_sum
+    return output_image
+      </code></pre>
+      <p>In the two loop implementation we still need to loop across the row/column pairs that act as kernel centers, but we can eliminate the use of more loops by using numpy builtins to directly compute np.sum(np.multiply(sub_image, kernel)). The two loop implementation can be seen below:</p>
+      <pre><code class="language-python">
+def convolve(image, kernel):
+    kernel = np.flipud(np.fliplr(kernel))
+    pad_y, pad_x = (kernel.shape[0]-1)//2, (kernel.shape[1]-1)//2
+    padded_image = np.pad(image, pad_width=((pad_y, pad_y), (pad_x, pad_x)), mode='constant', constant_values=0)
+    output_image = np.zeros((image.shape[0], image.shape[1]))
+    for row in range(pad_y, padded_image.shape[0] - pad_y):
+        for col in range(pad_x, padded_image.shape[1] - pad_x):
+        sub_image = padded_image[(row - pad_y):(row + pad_y + 1), (col - pad_x):(col + pad_x + 1)]
+        output_image[row - pad_y, col - pad_x] = np.sum(np.multiply(sub_image, kernel))
+    return output_image
+      </code></pre>
+      <p>The four loop implementation is slower than the two loop implementation because its inner two loops run in Python, whereas the two loop version uses NumPy ufuncs that execute the inner work in vectorized C. Both are still slower than scipy.signal.convolve2d, which is implemented in highly optimized C with cache-friendly loops. However, all three produce the same output visually.</p>
+      <p>Below are the results of using my two loop convolution implementation on a grayscale selfie with various kernels such as a 9x9 box filter and the finite difference operators:</p>
+      <figure>
+        <img src="/images/2/selfie_convolutions.png" alt="Selfie convolutions" />
+      </figure>
+
+      <!-- 1.2 Finite Difference Operator -->
+      <h3>Part 1.2 — Finite Difference Operator</h3>
+      <p>I compute the partial derivatives of the cameraman image by convolving it with the finite difference operators <code>Dx</code> and <code>Dy</code>. The gradient magnitude is computed with the formula <code>sqrt(Dx^2 + Dy^2)</code>. Finally, a binarized edge image is created by thresholding the gradient magnitude image such that any pixel with a value greater than <code>0.32</code> is set to <code>1</code> and the rest to <code>0</code>. The value of <code>0.32</code> was chosen (experimentally) as it preserved most of the edges of the cameraman but eliminated most of the noise coming from the buildings in the background and the grass. The images can be seen below:</p>
+      <figure>
+        <img src="/images/2/cameraman_dx_dy_gm_edges.png" alt="Binarized edge image" />
+      </figure>
+
+      <!-- 1.3 Derivative of Gaussian (DoG) -->
+      <h3>Part 1.3 — Derivative of Gaussian (DoG) Filter</h3>
+      <p>To reduce noise, we can first convolve the image with a gaussian kernel before performing the steps outlined in Part 1.2. Below are the results of doing this:</p>
+      <figure>
+        <img src="/images/2/cameraman_blurred_dx_dy_gm_edges.png" alt="Gaussian kernel visualization" />
+      </figure>
+      <p>Since convolution is an associative operation, we can first convolve the gaussian with the finite difference operators and then convolve the image with the results. This is equivalent to convolving the image with a gaussian and then convolving the result with the finite difference operators. We will call the gaussian convolved finite difference operators <code>DoGx</code> and <code>DoGy</code>, which are shown below:</p>
+      <figure>
+        <img src="/images/2/dogx_dogy.png" alt="DoGx and DoGy" />
+      </figure>
+      <p>The results of using the <code>DoGx</code> and <code>DoGy</code> operators are shown below:</p>
+      <figure>
+        <img src="/images/2/cameraman_dog_dx_dy_gm_edges.png" alt="DoGx and DoGy results" />
+      </figure>
+      <p>Comparing visually, we can see that the results are identical due to associativity. Additionally, we can observe that the resulting binary edge image is much more pronounced after noise reduction compared to the figure in Part 1.2. Specifically, the edges themselves are a lot thicker and we can afford to use a much lower threshold of <code>0.15</code>.</p>
+    </section>
+
+    <!-- Part 2: Fun with Frequencies -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 2 — Fun with Frequencies</h2>
+
+      <!-- 2.1 Unsharp Masking -->
+      <h3>Part 2.1 — Image “Sharpening” (Unsharp Mask)</h3>
+      <p>We can get the low frequencies of an image by convolving it with a gaussian filter <code>L = I * G</code>. We can get the high frequencies by subtracting <code>L</code> from the original image <code>H = I - L</code>. To sharpen the original image, we add <code>H</code> scaled by a factor <code>α</code> to the original image <code>S = I + αH</code>. Expanding this out:</p>
+      <pre><code>
+S = I + α(I - I * G)
+S = (1 + α)I - α(I * G)
+S = I * ((1+α)δ) - I * (αG) [I = I * δ where δ is the identity kernel]
+S = I * ((1+α)δ - αG)
+
+The unsharp mask filter is then K = ((1+α)δ - αG).
+      </code></pre>
+      <p>I showed the high frequency image by centering zero at mid-gray and auto-scaling by a 99th percentile range so tiny values don’t vanish and edges pop as light/dark. Below are the low, high and sharpened images of the Taj Mahal:</p>
+      <figure>
+        <img src="/images/2/taj_og_low_high_sharpened.png" alt="Taj Mahal original, low, high and sharpened images" />
+      </figure>
+      <p>Conceptually, increasing <code>α</code> will increase the amount of high frequencies added to the image, which will make the image appear sharper as edges have more contrast. The effect of varying the sharpening amount can be seen below: </p>
+      <figure>
+        <img src="/images/2/taj_og_sharpened.png" alt="Taj Mahal original and sharpened images" />
+      </figure>
+      <p>Below are the low, high and sharpened images of a friend's cat:</p>
+      <figure>
+        <img src="/images/2/cat_og_low_high_sharpened.png" alt="Cat original, low, high and sharpened images" />
+      </figure>
+      <p>For evaluation, I took a sharp image, blurred it, and then re-sharpened it.</p>
+      <figure>
+        <img src="/images/2/fountain_og_blurred_sharpened.png" alt="Sharp image, blurred and sharpened images" />
+      </figure>
+      <p>As we can see, although blurring makes the image lose the pop of its edges, re-sharpening is able restore a lot of it. However, we can also see that the sharpened image has some artifacts of overshoot, which is evident in the contours of the statues. </p>
+
+      <!-- 2.2 Hybrid Images -->
+      <h3>Part 2.2 — Hybrid Images</h3>
+      <p>To create a hybrid image, we can take the low-pass filter of one image and the high-pass filter of another and combine them with a weighted sum. Cutoff frequencies were chosen such that the low-pass image was visible from a distance and the high-pass image was visible up close. Prior to processing, the images were aligned using the provided helper functions. Below are some hybrid images created with this technique:</p>
+      <figure>
+        <img src="/images/2/hybrid_images.png" alt="Hybrid images" />
+      </figure>
+      <p>Below is the detailed process for my favorite hybrid, the panda + raccoon:</p>
+      <figure>
+        <img src="/images/2/panda_raccoon_frequency_analysis.png" alt="Panda + raccoon frequency analysis" />
+      </figure>
+
+      <!-- 2.3 Stacks -->
+      <h3>Part 2.3 — Gaussian & Laplacian Stacks</h3>
+      <p>To blend two images, Gaussian and Laplacian stacks come in handy. A Gaussian stack progressively blurs the image, while a Laplacian stack stores band-pass detail as <code>L_i = G_i − G_{i+1}</code> with the final level being <code>L_n = G_n</code>. To blend two images, we create a mask and then a Gaussian stack for each image and the mask. Then, we create a Laplacian stack for each image. A key property is that adding all Laplacian levels recovers the original image. We exploit this by forming the blended Laplacian for each level <code>i</code>: <code>L_blend_i = GM_i * LA_i + (1 − GM_i) * LB_i</code>, where <code>GM_i</code> is the mask’s Gaussian level and <code>*</code> is element-wise multiplication. Finally, we reconstruct the blended image by summing the blended Laplacian levels.</p>
+      <figure>
+        <img src="/images/2/oraple.png" alt="Oraple gaussian and laplacian stacks" />
+      </figure>
+
+      <!-- 2.4 Multiresolution Blending -->
+      <h3>Part 2.4 — Multiresolution Blending (a.k.a. the Oraple!)</h3>
+      <p>Here are additional blended images that I created using the same process, but this time with irregular masks:</p>
+      <figure>
+        <img src="/images/2/coffee_galaxy.png" alt="Coffee + galaxy gaussian and laplacian stacks" />
+      </figure>
+      <figure>
+        <img src="/images/2/hamster_wings.png" alt="Hamster + wings gaussian and laplacian stacks" />
+      </figure>
+    </section>
+
+    <section class="footer">
+      <p>Course: CS180 — Intro to Computer Vision & Computational Photography • Project 2</p>
+      <p><a href="../index.html">Back to Projects</a></p>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
+</body>
+</html>
