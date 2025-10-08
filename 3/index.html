@@ -115,7 +115,9 @@
 
     <section id="A3" class="card" style="margin-top:16px;">
       <h2>A.3 — Warp the Images</h2>
-      <p>My process for warping is as follows. I start by projecting the image’s four corners through the homography and get a bounding box. This bounding box defines the output canvas along with offsets <code>(dx, dy)</code> to keep all pixel positions nonnegative. I then use inverse warping to map each output pixel back to the source and sample with either nearest neighbor or bilinear (weighted average of four neighbors) while creating an alpha mask for pixels mapped outside the source. For rectification, I select four corners of a rectangular object, artificially define an axis-aligned target rectangle, compute the homography, and warp to create a straight on rectangular view.</p>
+      <p>My process for warping is as follows. I start by projecting the image’s four corners through the homography and get a bounding box. This bounding box defines the output canvas along with offsets <code>(dx, dy)</code> to keep all pixel positions nonnegative. I then use inverse warping to map each output pixel back to the source and sample with either nearest neighbor or bilinear (weighted average of four neighbors) while creating an alpha mask for pixels mapped outside the source. For rectification, I select four corners of a rectangular object, artificially define an axis-aligned target rectangle, compute the homography, and warp to create a straight on rectangular view.
+        I compute the target rectangle by averaging the opposite edge lengths of the selected rectangular object to set width and height (top with bottom, left with right), then place that rectangle axis-aligned from <code>(0, 0)</code> to <code>(target_w−1, target_h−1)</code>.
+      </p>
       <h3>Rectification</h3>
       <p>Below are some examples of rectification using the process described above for both nearest neighbor and bilinear interpolation.</p>
       <div class="stack">
