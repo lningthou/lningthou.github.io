@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 3A — Image Warping & Mosaicing</title>
+  <meta name="description" content="Project 3A: Image Warping & Mosaicing — deliverables template" />
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: #111317;
+      --muted: #aab2c0;
+      --text: #e6edf3;
+      --accent: #66c0f4;
+      --grid-gap: 14px;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: linear-gradient(180deg, #0a0c10 0%, #0b0c10 100%);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    header {
+      backdrop-filter: saturate(130%) blur(8px);
+      background: rgba(10,12,16,0.7);
+      border-bottom: 1px solid #1f232b;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 22px; }
+    h1 { font-size: clamp(28px, 3vw, 40px); letter-spacing: 0.2px; margin: 6px 0 4px; }
+    h2 { font-size: clamp(20px, 2.2vw, 28px); margin: 26px 0 10px; }
+    h3 { margin: 18px 0 8px; font-size: 18px; color: var(--accent); }
+    p { color: var(--text); opacity: 0.94; }
+    .muted { color: var(--muted); }
+    .card { background: var(--card); border: 1px solid #1f232b; border-radius: var(--radius); padding: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--grid-gap); }
+    .grid-2x2 { grid-template-columns: repeat(2, 1fr); }
+    .stack { display: grid; grid-template-columns: 1fr; gap: var(--grid-gap); }
+    .span-2 { grid-column: 1 / -1; }
+    figure { margin: 0; }
+    figcaption { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    img { display: block; width: 100%; height: auto; border: none; }
+    .row { display: flex; flex-wrap: wrap; gap: var(--grid-gap); }
+    .row > * { flex: 1 1 280px; }
+    .tag { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); padding: 6px 10px; border-radius: 999px; border: 1px solid #1f232b; background: rgba(255,255,255,0.02); }
+    a { color: var(--accent); }
+    .footer { margin: 40px 0 20px; font-size: 13px; color: var(--muted); }
+    .todo { background: #18202b; color: var(--accent); padding: 2px 8px; border-radius: 999px; border: 1px solid #243142; font-size: 12px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
+    .callout { border-left: 3px solid var(--accent); padding: 8px 12px; background: rgba(102,192,244,0.07); border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; border-bottom: 1px solid #232a33; text-align: left; font-size: 14px; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div>
+          <div class="tag">CS180 • Project 3A • Image Warping & Mosaicing</div>
+          <h1>Image Warping & Mosaicing — Part A</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="A1" class="card" style="margin-top:16px;">
+      <h2>A.1 — Shoot the Pictures</h2>
+      <p>Below are two sets of images with projective transformations between them. I took them by keeping my phone camera fixed while rotating my phone around. I chose overlapping scenes with a lot of detail and still objects so that I could get a lot of correspondences.</p>
+      <h3>Set 1: WeWork</h3>
+      <div class="grid grid-1x2">
+        <figure>
+          <img src="../images/3/wework1.png" alt="Set 1, image 1" />
+        </figure>
+        <figure>
+          <img src="../images/3/wework2.png" alt="Set 1, image 2" />
+        </figure>
+      </div>
+      <h3>Set 2: Window</h3>
+      <div class="grid grid-1x2">
+        <figure>
+          <img src="../images/3/window1.jpg" alt="Set 2, image 1" />
+        </figure>
+        <figure>
+          <img src="../images/3/window2.jpg" alt="Set 2, image 2" />
+        </figure>
+      </div>
+    </section>
+
+    <section id="A2" class="card" style="margin-top:16px;">
+      <h2>A.2 — Recover Homographies</h2>
+      <h3>Linear System Setup</h3>
+      <p>For a pair of projective transformed images, the transformation can be described as a homography <code>p'=Hp</code> where <code>H</code> is a <code>3x3</code> matrix with 8 unknowns and <code>p</code> and <code>p'</code> are corresponding points between the two images. We can solve for <code>H</code> by rewriting the definition as <code>Ah=b</code> and solving for <code>h</code> using least squares. Below is an image of the steps required to set up this linear system.</p>
+      <figure>
+        <img src="../images/3/linear_system.JPG" alt="Linear system setup" />
+      </figure>
+      <p>As you can see, each pair of correspondences adds two rows to to the linear system.</p>
+      <h3>Visualized Correspondences and H</h3>
+      <p>Below are visualizations of the sets from part 1 along with their correspondences and the recovered <code>H</code> matrix. I chose to use 20 correspondences.</p>
+      <div class="stack">
+        <h4>Set 1: WeWork</h4>
+        <figure>
+          <img src="../images/3/wework1_wework2_20.png" alt="Homography case 1: correspondences and matrices" />
+        </figure>
+        <h4>Set 2: Window</h4>
+        <figure>
+          <img src="../images/3/window1_window2_20.png" alt="Homography case 2: correspondences and matrices" />
+        </figure>
+      </div>
+    </section>
+
+    <section id="A3" class="card" style="margin-top:16px;">
+      <h2>A.3 — Warp the Images</h2>
+      <p>My process for warping is as follows. I start by projecting the image’s four corners through the homography and get a bounding box. This bounding box defines the output canvas along with offsets <code>(dx, dy)</code> to keep all pixel positions nonnegative. I then use inverse warping to map each output pixel back to the source and sample with either nearest neighbor or bilinear (weighted average of four neighbors) while creating an alpha mask for pixels mapped outside the source. For rectification, I select four corners of a rectangular object, artificially define an axis-aligned target rectangle, compute the homography, and warp to create a straight on rectangular view.</p>
+      <h3>Rectification</h3>
+      <p>Below are some examples of rectification using the process described above for both nearest neighbor and bilinear interpolation.</p>
+      <div class="stack">
+        <h4>Abstract Painting</h4>
+        <figure>
+          <img src="../images/3/abstract_painting_rectified.png" alt="Abstract painting rectification" />
+        </figure>
+        <h4>House Painting</h4>
+        <figure>
+          <img src="../images/3/house_painting_rectified.png" alt="House painting rectification" />
+        </figure>
+      </div>
+    </section>
+
+    <section id="A4" class="card" style="margin-top:16px;">
+      <h2>A.4 — Blend the Images into a Mosaic</h2>
+      <p>My process for creating mosaics is as follows. I start by creating a canvas that can fit all the warped images by projecting each image’s corners and finding a bounding box that can contain everything. For each image, I inverse warp each output pixel back to the source and sample color with bilinear interpolation. I then create a feather mask that creates a weight strongest at the center of the image and fades towards the edges. I multiply this by the alpha mask to make sure pixels mapped outside the source do not contribute anything. Finally, at each output pixel I add the weighted color and divide by the total weight to create a fair blend across overlaps and minimize visible seams.</p>
+      <h3>Mosaic 1</h3>
+      <div class="grid grid-2x2">
+        <figure>
+          <img src="../images/3/wework1.png" alt="Mosaic 1 image 1" />
+        </figure>
+        <figure>
+          <img src="../images/3/wework2.png" alt="Mosaic 1 image 2" />
+        </figure>
+        <figure class="span-2">
+          <img src="../images/3/wework1_wework2_mosaic.png" alt="Mosaic 1 blended result" />
+        </figure>
+      </div>
+
+      <h3>Mosaic 2</h3>
+      <div class="grid grid-2x2">
+        <figure>
+          <img src="../images/3/window1.jpg" alt="Mosaic 2 image 1" />
+        </figure>
+        <figure>
+          <img src="../images/3/window2.jpg" alt="Mosaic 2 image 2" />
+        </figure>
+        <figure class="span-2">
+          <img src="../images/3/window1_window2_mosaic.png" alt="Mosaic 2 blended result" />
+        </figure>
+      </div>
+
+      <h3>Mosaic 3</h3>
+      <div class="grid grid-2x2">
+        <figure>
+          <img src="../images/3/hallway1.png" alt="Mosaic 3 image 1" />
+        </figure>
+        <figure>
+          <img src="../images/3/hallway2.png" alt="Mosaic 3 image 2" />
+        </figure>
+        <figure class="span-2">
+          <img src="../images/3/hallway1_hallway2_mosaic.png" alt="Mosaic 3 blended result" />
+        </figure>
+      </div>
+    </section>
+
+    <section class="footer">
+      <p>Course: CS180 — Intro to Computer Vision & Computational Photography • Project 3A</p>
+      <p><a href="../index.html">Back to Projects</a></p>
+    </section>
+  </main>
+</body>
+</html>
