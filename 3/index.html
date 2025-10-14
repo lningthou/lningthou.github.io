@@ -47,7 +47,6 @@
     .tag { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); padding: 6px 10px; border-radius: 999px; border: 1px solid #1f232b; background: rgba(255,255,255,0.02); }
     a { color: var(--accent); }
     .footer { margin: 40px 0 20px; font-size: 13px; color: var(--muted); }
-    .todo { background: #18202b; color: var(--accent); padding: 2px 8px; border-radius: 999px; border: 1px solid #243142; font-size: 12px; }
     code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 13px; }
     .callout { border-left: 3px solid var(--accent); padding: 8px 12px; background: rgba(102,192,244,0.07); border-radius: 8px; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; }
@@ -171,6 +170,77 @@
         </figure>
         <figure class="span-2">
           <img src="../images/3/hallway1_hallway2_mosaic.png" alt="Mosaic 3 blended result" />
+        </figure>
+      </div>
+    </section>
+
+    <section id="B1" class="card" style="margin-top:16px;">
+      <h2>B.1 — Harris Corner Detection</h2>
+      <p>I used the provided Harris corner detector to find lots of initial candidate points. From those candidates, I ran Adaptive Non-Maximal Suppression (ANMS). The process for ANMS is as follows: for each Harris corner, I look for the closest corner that is similar in strength with a robustness of 0.9 and record the distance as its “suppression radius.” Finally, I sort by this radius and keep the top 500. The intuition behind this process is that rather than simply taking the strongest corners, we select points that are both strong and spatially well-distributed. This ensures good coverage across the image, which is especially important for maximizing the number of shared corners in the overlapping regions between a given image 1 and image 2. The figure below shows an original image, the Harris points, and the ANMS result:</p>
+      <figure>
+        <img src="../images/3/wework1_harris_anms.png" alt="Detected corners with/without ANMS for WeWork 1" />
+      </figure>
+    </section>
+
+    <section id="B2" class="card" style="margin-top:16px;">
+      <h2>B.2 — Feature Descriptor Extraction</h2>
+      <p>My process for extracting feature descriptors is as follows. I start by considering the 40x40 neighborhood around each ANMS corner and sample it at every 5 pixels to get an 8x8 summary of that area. Since we are dealing with sub-pixel values, I use bilinear sampling. I also add reflective padding around the image so that corners near the border still have a full neighborhood to sample from. Afterwards, I normalize each 8x8 patch. The intuition behind this process is that it produces descriptors that are both compact and invariant to local brightness/contrast changes.</p>
+      <figure>
+        <img src="../images/3/wework1_descriptors.png" alt="Feature descriptors for WeWork 1" />
+      </figure>
+    </section>
+
+    <section id="B3" class="card" style="margin-top:16px;">
+      <h2>B.3 — Feature Matching</h2>
+      <p>My process for finding feature matches is as follows. I compare each 8×8 descriptor from image 1 to all descriptors from image 2 using the squared Euclidean distance. For every descriptor from image 1, I find its nearest and second-nearest neighbors in image 2 and apply the Lowe ratio test: if the ratio (best / second-best) <= 0.45, I keep it as a valid match. I chose 0.45 after consulting Figure 6b from the paper, which showed that at this value, incorrect matches were low while correct matches remained relatively high. At the same time, it was a value that was a lot more forgiving than something like 0.1 (which although had more correct matches it would also be a lot more strict and give us less matches to work with for RANSAC). The value of 0.45 was actually still too strict for some images such as the window pair. For this pair of images, I elected to use a value of 0.75 so that we would have enough matches to work with. The intuition behind this overall process is that a good feature match should stand out from other candidates.</p>
+      <h3>Set 1: WeWork</h3>
+      <figure>
+        <img src="../images/3/wework1_wework2_matches.png" alt="Matched features — WeWork pair" />
+      </figure>
+      <h3>Set 2: Window</h3>
+      <p>For this pair of images, I noticed a large number of false matches, and I had to use a higher Lowe ratio threshold of 0.75 to obtain enough matches for RANSAC. I believe this is because of many repetitive patterns in the scene (on the windows and on the buildings in the background) which produce a lot of similar local descriptors.</p>      <figure>
+        <img src="../images/3/window1_window2_matches.png" alt="Matched features — Window pair" />
+      </figure>
+      <h3>Set 3: Hallway</h3>
+      <figure>
+        <img src="../images/3/hallway1_hallway2_matches.png" alt="Matched features — Hallway pair" style="max-width: 300px; margin: 0 auto;" />
+      </figure>
+    </section>
+
+    <section id="B4" class="card" style="margin-top:16px;">
+      <h2>B.4 — RANSAC for Robust Homography</h2>
+      <p>I use 4-point RANSAC to estimate a robust homography. My process is as follows. For each iteration (I perform 2000), I randomly pick 4 matched pairs and compute a homography. I then project all image 1 points with this homography and count how many land within eps (I chose 2.5) pixels of their match in image 2 (the inliers). I keep the iteration with the most inliers and recompute a final homography using just those inliers. Finally, I build the automatic mosaic by warping image 1 onto image 2's plane with that final homography. The intuition behind this process is that although most random 4-point guesses are wrong, a correct solution will agree with most of them. By scoring iterations on how many inliers we have and refitting on them, we can find a good homography.</p>
+      <h3>Results</h3>
+      <div class="grid grid-2">
+        <figure>
+          <img src="../images/3/wework1_wework2_mosaic.png" alt="Manual mosaic — WeWork" />
+          <figcaption>Manual mosaic - WeWork</figcaption>
+        </figure>
+        <figure>
+          <img src="../images/3/wework1_wework2_auto_mosaic.png" alt="Automatic mosaic — WeWork" />
+          <figcaption>Automatic mosaic - WeWork</figcaption>
+        </figure>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:14px;">
+        <figure>
+          <img src="../images/3/window1_window2_mosaic.png" alt="Manual mosaic — Window" />
+          <figcaption>Manual mosaic - Window</figcaption>
+        </figure>
+        <figure>
+          <img src="../images/3/window1_window2_auto_mosaic.png" alt="Automatic mosaic — Window" />
+          <figcaption>Automatic mosaic - Window</figcaption>
+        </figure>
+      </div>
+
+      <div class="grid grid-2" style="margin-top:14px;">
+        <figure>
+          <img src="../images/3/hallway1_hallway2_mosaic.png" alt="Manual mosaic — Hallway" />
+          <figcaption>Manual mosaic - Hallway</figcaption>
+        </figure>
+        <figure>
+          <img src="../images/3/hallway1_hallway2_auto_mosaic.png" alt="Automatic mosaic — Hallway" />
+          <figcaption>Automatic mosaic - Hallway</figcaption>
         </figure>
       </div>
     </section>
