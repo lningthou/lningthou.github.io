@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.min.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 4 – Neural Radiance Field</title>
+  <meta name="description" content="Project 4: Neural Radiance Field — explanations, methods, and results." />
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: #111317;
+      --muted: #aab2c0;
+      --text: #e6edf3;
+      --accent: #66c0f4;
+      --grid-gap: 14px;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: linear-gradient(180deg, #0a0c10 0%, #0b0c10 100%);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    header {
+      backdrop-filter: saturate(130%) blur(8px);
+      background: rgba(10,12,16,0.7);
+      border-bottom: 1px solid #1f232b;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 22px; }
+    h1 { font-size: clamp(28px, 3vw, 40px); letter-spacing: 0.2px; margin: 6px 0 4px; }
+    h2 { font-size: clamp(20px, 2.2vw, 28px); margin: 26px 0 10px; }
+    h3 { margin: 18px 0 8px; font-size: 18px; color: var(--accent); }
+    p { color: var(--text); opacity: 0.94; }
+    .muted { color: var(--muted); }
+    .card { background: var(--card); border: 1px solid #1f232b; border-radius: var(--radius); padding: 18px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted);
+      padding: 6px 10px; border-radius: 999px; border: 1px solid #1f232b; background: rgba(255,255,255,0.02);
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--grid-gap);
+    }
+    figure { margin: 0; }
+    figcaption { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    img { display: block; width: 100%; height: auto; border-radius: 0; border: none; }
+    .row { display: flex; flex-wrap: wrap; gap: var(--grid-gap); }
+    .row > * { flex: 1 1 280px; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #18202b; color: var(--accent); font-size: 12px; border: 1px solid #243142; }
+    .kbd { font: inherit; background: #0d1117; border: 1px solid #2d333b; padding: 2px 6px; border-radius: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; border-bottom: 1px solid #232a33; text-align: left; font-size: 14px; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+    .footer { margin: 40px 0 20px; font-size: 13px; color: var(--muted); }
+    a { color: var(--accent); }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div>
+          <div class="tag">CS180 • Project 4 • Neural Radiance Field</div>
+          <h1>Neural Radiance Field</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <section class="card">
+      <h2>Part 0 — Calibrating Your Camera and Capturing a 3D Scan</h2>
+      <h3>Part 0.3 — Estimating Camera Pose</h3>
+      <p>Below are two screenshots of my camera frustrums visualization in Viser.</p>
+      <div class="grid">
+        <figure><img src="/images/4/viser1.png"></figure>
+        <figure><img src="/images/4/viser2.png"></figure>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1 — Fit a Neural Field to a 2D Image</h2>
+
+      <h3>Model Architecture Report</h3>
+      <p>For this part I created a Multilayer Perceptron (MLP) network with Sinusoidal Positional Encoding (PE) that takes in the 2-dim pixel coordinates and outputs the 3-dim pixel colors. Below is an image and table detailing the architecture.</p>
+      <figure><img src="/images/4/nf_mlp.jpg"></figure>
+      <table>
+        <tbody>
+          <tr>
+            <th>Layers</th>
+            <td>4 fully-connected layers (3 hidden + 1 output):<br>
+                Linear(42->256) → ReLU → Linear(256->256) → ReLU → Linear(256->256) → ReLU → Linear(256->3) → Sigmoid
+            </td>
+          </tr>
+          <tr><th>Width</th><td>256</td></tr>
+          <tr><th>Learning Rate</th><td>1e-2</td></tr>
+          <tr>
+            <th>PE</th>
+            <td>L = 10 -> input dimension = 2 + 4L = 42 (original x & y plus sin/cos terms for both x & y)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Training Progression (Provided Test Image)</h3>
+      <h4>Original Image</h4>
+      <figure><img src="/images/4/fox.jpg" style="width:25%"></figure>
+      <h4>Images at Different Iterations</h4>
+      <figure><img src="/images/4/fox_images.png"></figure>
+      <h4>PSNR Curve</h4>
+      <figure><img src="/images/4/fox_psnr_curve.png" style="width:55%"></figure>
+
+      <h3>Training Progression (Own Image)</h3>
+      <h4>Original Image</h4>
+      <figure><img src="/images/4/frog.jpg" style="width:25%"></figure>
+      <h4>Images at Different Iterations</h4>
+      <figure><img src="/images/4/frog_images.png"></figure>
+      <h4>PSNR Curve</h4>
+      <figure><img src="/images/4/frog_psnr_curve.png" style="width:55%"></figure>
+
+      <h3>Hyperparameter Tuning</h3>
+      <figure><img src="/images/4/frog_hyperparameter_grid.png" style="width:55%"></figure>
+    </section>
+
+    <!-- Part 2: Multi-view NeRF -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 2 — Fit a Neural Radiance Field from Multi-view Images</h2>
+
+      <h3>Part 2.1 — Rays from Cameras</h3>
+      <p>Briefly explain <code>w2c</code>/<code>c2w</code>, pixel→camera, camera→world, and pixel→ray. Include any batched ops and sanity checks.</p>
+
+      <h3>Part 2.2 — Sampling</h3>
+      <p>Explain ray sampling across images and stratified samples along rays (near/far, N samples, perturbation).</p>
+
+      <h3>Part 2.3 — Dataloader & Viser Visualization</h3>
+      <p><strong>Deliverable:</strong> Plot the cameras + ≤100 sampled rays + 3D sample points.</p>
+      <figure>
+        <img src="/images/4/p2_rays_samples.png" alt="Cameras, rays, and samples (placeholder)" />
+        <figcaption>Viser plot visualizing cameras, rays, and samples.</figcaption>
+      </figure>
+
+      <h3>Part 2.4 — NeRF Network</h3>
+      <p>Summarize your MLP (inputs: PE(x), PE(d); outputs: σ and rgb; skip connections; activations).</p>
+
+      <h3>Part 2.5 — Volume Rendering & Training Results (Lego)</h3>
+      <p>Show intermediate renderings during training and the validation PSNR curve.</p>
+      <div class="grid">
+        <figure><img src="/images/4/p2_lego_iter_100.png" alt="~100 iters" /><figcaption>~100 iters</figcaption></figure>
+        <figure><img src="/images/4/p2_lego_iter_500.png" alt="~500 iters" /><figcaption>~500 iters</figcaption></figure>
+        <figure><img src="/images/4/p2_lego_iter_1000.png" alt="~1000 iters" /><figcaption>~1000 iters</figcaption></figure>
+        <figure><img src="/images/4/p2_lego_iter_2500.png" alt="~2500 iters" /><figcaption>~2500 iters</figcaption></figure>
+      </div>
+      <figure>
+        <img src="/images/4/p2_val_psnr_curve.png" alt="Validation PSNR curve" />
+        <figcaption>Validation PSNR across iterations (target ≥ 23 PSNR for full credit).</figcaption>
+      </figure>
+      <h3>Part 2.5 (cont.) — Novel-view Rendering (Lego)</h3>
+      <figure>
+        <img src="/images/4/p2_lego_spherical.gif" alt="Spherical novel-view GIF (placeholder)" />
+        <figcaption>Spherical path rendering using <code>c2ws_test</code>.</figcaption>
+      </figure>
+
+      <h3>Part 2.6 — Train NeRF on Your Own Dataset</h3>
+      <p><strong>Deliverables:</strong> GIF of novel views circling your object, a training loss curve, and intermediate renders. Briefly note any code/hyperparameter changes (e.g., near/far, #samples, image resolution).</p>
+      <figure>
+        <img src="/images/4/p26_train_loss.png" alt="Training loss curve (own dataset)" />
+        <figcaption>Training loss over iterations.</figcaption>
+      </figure>
+      <div class="grid">
+        <figure><img src="/images/4/p26_iter_500.png" alt="Own ~500 iters" /><figcaption>~500 iters</figcaption></figure>
+        <figure><img src="/images/4/p26_iter_2000.png" alt="Own ~2000 iters" /><figcaption>~2000 iters</figcaption></figure>
+        <figure><img src="/images/4/p26_iter_6000.png" alt="Own ~6000 iters" /><figcaption>~6000 iters</figcaption></figure>
+        <figure><img src="/images/4/p26_iter_10000.png" alt="Own ~10000 iters" /><figcaption>~10000 iters</figcaption></figure>
+      </div>
+      <figure>
+        <img src="/images/4/p26_novel_views.gif" alt="Own dataset novel views GIF" />
+        <figcaption>Novel views of your object.</figcaption>
+      </figure>
+    </section>
+
+    <section class="footer">
+      <p>Course: CS180 — Intro to Computer Vision & Computational Photography • Project 4</p>
+      <p><a href="../index.html">Back to Projects</a></p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
+</body>
+</html>
