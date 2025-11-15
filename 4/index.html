@@ -131,55 +131,101 @@
     <section class="card" style="margin-top: 16px;">
       <h2>Part 2 — Fit a Neural Radiance Field from Multi-view Images</h2>
 
-      <h3>Part 2.1 — Rays from Cameras</h3>
-      <p>Briefly explain <code>w2c</code>/<code>c2w</code>, pixel→camera, camera→world, and pixel→ray. Include any batched ops and sanity checks.</p>
+      <h3>Part 2.1 — Create Rays from Cameras</h3>
+      <h4>Camera to World Coordinate Conversion</h4>
+      <p>I implemented the <code>transform</code> function to convert points from camera coordinates to world coordinates. The function converts 3D points to homogeneous coordinates by appending ones, multiplies by the c2w matrix, and extracts the resulting 3D world coordinates by removing the homogeneous component.</p>
+      
+      <h4>Pixel to Camera Coordinate Conversion</h4>
+      <p>The <code>pixel_to_camera</code> function converts 2D pixel coordinates (u, v) to 3D camera-space coordinates using the intrinsic matrix K. It extracts the focal lengths (fx, fy) and principal point (ox, oy) from K, then applies the pinhole camera inverse projection formula: x = (u - ox) * s / fx and y = (v - oy) * s / fy, where s is the depth (set to 1.0 for direction rays).</p>
+      
+      <h4>Pixel to Ray</h4>
+      <p>The <code>pixel_to_ray</code> function combines the above transformations to generate rays in world space. Ray origins are extracted directly from the translation component of the c2w matrix (camera centers). Ray directions are computed by first converting pixels to camera coordinates, transforming them to world space, computing the vector from ray origin to the transformed point, and normalizing to unit length.</p>
 
       <h3>Part 2.2 — Sampling</h3>
-      <p>Explain ray sampling across images and stratified samples along rays (near/far, N samples, perturbation).</p>
-
-      <h3>Part 2.3 — Dataloader & Viser Visualization</h3>
-      <p><strong>Deliverable:</strong> Plot the cameras + ≤100 sampled rays + 3D sample points.</p>
+      <h4>Sampling Rays from Images</h4>
+      <p>I created the <code>RaysData</code> class to precompute and store all possible rays from the training images. During initialization, it generates a grid of pixel coordinates (offset by 0.5 for pixel centers) for each image, converts all pixels to rays using the camera parameters, and stores the ray origins, directions, and corresponding RGB values as tensors. The <code>sample_rays</code> method then randomly samples N rays by generating random indices into this precomputed set.</p>
+      
+      <h4>Sampling Points along Rays</h4>
+      <p>The <code>sample_along_rays</code> function implements stratified sampling to generate 3D points along each ray between the near and far bounds. It divides the [near, far] interval into n_samples equal bins of width t_width. For each bin, it samples a point either at the bin center (when perturb=False) or at a random location within the bin (when perturb=True). Finally, it computes the 3D positions using the ray equation: p = o + t * d.</p>
+      
+      <h3>Part 2.3 — Putting the Dataloading All Together</h3>
+      <p>The <code>RaysData</code> class described in Part 2.2 serves as the dataloader for the NeRF training pipeline. It handles converting pixel coordinates to rays and returning ray origins, ray directions, and pixel colors. To verify the correctness of the ray generation and sampling implementation, I visualized the cameras, rays, and samples in 3D using the provided Viser code.</p>
       <figure>
-        <img src="/images/4/p2_rays_samples.png" alt="Cameras, rays, and samples (placeholder)" />
-        <figcaption>Viser plot visualizing cameras, rays, and samples.</figcaption>
+        <img src="/images/4/rays_viser.png"/>
       </figure>
 
-      <h3>Part 2.4 — NeRF Network</h3>
-      <p>Summarize your MLP (inputs: PE(x), PE(d); outputs: σ and rgb; skip connections; activations).</p>
+      <h3>Part 2.4 — Neural Radiance Field</h3>
+      <p>I implemented the NeRF MLP architecture shown below, which takes 3D world coordinates and viewing directions as input and outputs density and RGB color values.</p>
+      <figure>
+        <img src="/images/4/nerf_mlp.png"/>
+        <figcaption>NeRF network architecture</figcaption>
+      </figure>
+      <p>The network uses positional encoding with L=10 for 3D positions (resulting in 63-dimensional input) and L=4 for viewing directions (27-dimensional input). The architecture consists of 8 fully-connected layers with width 256. After the first 4 layers (fc1-fc4), the original position encoding is concatenated with the features via a skip connection before continuing through layers fc5-fc8. The density branch uses a single linear layer with ReLU activation to ensure positive density values. The RGB branch processes features through an additional linear layer, concatenates them with the direction encoding, and passes through two more layers (width 128, then 3) with a final Sigmoid activation to constrain colors to [0,1].</p>
 
-      <h3>Part 2.5 — Volume Rendering & Training Results (Lego)</h3>
-      <p>Show intermediate renderings during training and the validation PSNR curve.</p>
+      <h3>Part 2.5 — Volume Rendering</h3>
+      <p>I implemented volume rendering to convert the density and color predictions along each ray into a final pixel color. The key idea is to accumulate color contributions from points along the ray, weighted by how likely the ray is to terminate at each point. Points closer to the camera contribute more if they have high density, while points further away contribute less if earlier points have already absorbed the light. This is computed by calculating transmittance (how much light reaches each point) and alpha values (probability of the ray stopping at each point), then summing the weighted color contributions.</p>
+      <p>The <code>volrend</code> function implements this efficiently using cumulative sums to compute transmittance in a vectorized manner. During training, I render batches of rays and optimize using MSE loss between predicted and ground truth colors. The <code>render_image</code> function renders complete validation images by processing all pixels in chunks.</p>
+      
+      <p>Training hyperparameters for the Lego dataset:</p>
+      <table>
+        <tbody>
+          <tr><th>Iterations</th><td>1000</td></tr>
+          <tr><th>Batch Size</th><td>10000</td></tr>
+          <tr><th>Samples per Ray</th><td>64</td></tr>
+          <tr><th>Near/Far Bounds</th><td>2.0 / 6.0</td></tr>
+          <tr><th>Learning Rate</th><td>5e-4</td></tr>
+          <tr><th>Network Width</th><td>256</td></tr>
+          <tr><th>Position Encoding (Lx)</th><td>10</td></tr>
+          <tr><th>Direction Encoding (Ld)</th><td>4</td></tr>
+          <tr><th>Stratified Sampling</th><td>Enabled with perturbation</td></tr>
+        </tbody>
+      </table>
+      
+      <p>Below are images showing validation renders and PSNR at various training iterations, showing progressive improvement in reconstruction quality:</p>
+      <figure>
+        <img src="/images/4/lego_val_renders.png"/>
+      </figure>
+      
+      <figure>
+        <img src="/images/4/lego_val_psnr.png" style="width:70%" />
+      </figure>
+
+      <p>Using the trained model, I rendered novel views along a spherical camera path around the lego bulldozer using the provided test camera poses:</p>
+      <figure>
+        <video autoplay loop muted playsinline style="width:25%; display:block;">
+          <source src="/images/4/lego_nerf.mp4" type="video/mp4">
+        </video>
+      </figure>
+      
+
+      <h3>Part 2.6 — Training with your own data</h3>
+      <p>I trained NeRF on my own captured dataset of [YOUR_OBJECT_DESCRIPTION]. This required several adjustments from the default Lego configuration: near/far bounds adjusted to near = [YOUR_NEAR] and far = [YOUR_FAR], image resolution [YOUR_RESOLUTION], number of samples [YOUR_N_SAMPLES] per ray, learning rate [YOUR_LR], and trained for [YOUR_TOTAL_ITERS] iterations.</p>
+      <figure>
+        <img src="/images/4/p26_train_loss.png" alt="Training loss curve" style="width:65%" />
+        <figcaption>Training loss over iterations on custom dataset</figcaption>
+      </figure>
+      <p>The renderings below show how the model progressively learned the geometry and appearance of my captured object:</p>
       <div class="grid">
-        <figure><img src="/images/4/p2_lego_iter_100.png" alt="~100 iters" /><figcaption>~100 iters</figcaption></figure>
-        <figure><img src="/images/4/p2_lego_iter_500.png" alt="~500 iters" /><figcaption>~500 iters</figcaption></figure>
-        <figure><img src="/images/4/p2_lego_iter_1000.png" alt="~1000 iters" /><figcaption>~1000 iters</figcaption></figure>
-        <figure><img src="/images/4/p2_lego_iter_2500.png" alt="~2500 iters" /><figcaption>~2500 iters</figcaption></figure>
+        <figure>
+          <img src="/images/4/p26_iter_500.png" alt="~500 iterations" />
+          <figcaption>~500 iterations</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/4/p26_iter_2000.png" alt="~2000 iterations" />
+          <figcaption>~2000 iterations</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/4/p26_iter_6000.png" alt="~6000 iterations" />
+          <figcaption>~6000 iterations</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/4/p26_iter_10000.png" alt="~10000 iterations" />
+          <figcaption>~10000 iterations</figcaption>
+        </figure>
       </div>
       <figure>
-        <img src="/images/4/p2_val_psnr_curve.png" alt="Validation PSNR curve" />
-        <figcaption>Validation PSNR across iterations (target ≥ 23 PSNR for full credit).</figcaption>
-      </figure>
-      <h3>Part 2.5 (cont.) — Novel-view Rendering (Lego)</h3>
-      <figure>
-        <img src="/images/4/p2_lego_spherical.gif" alt="Spherical novel-view GIF (placeholder)" />
-        <figcaption>Spherical path rendering using <code>c2ws_test</code>.</figcaption>
-      </figure>
-
-      <h3>Part 2.6 — Train NeRF on Your Own Dataset</h3>
-      <p><strong>Deliverables:</strong> GIF of novel views circling your object, a training loss curve, and intermediate renders. Briefly note any code/hyperparameter changes (e.g., near/far, #samples, image resolution).</p>
-      <figure>
-        <img src="/images/4/p26_train_loss.png" alt="Training loss curve (own dataset)" />
-        <figcaption>Training loss over iterations.</figcaption>
-      </figure>
-      <div class="grid">
-        <figure><img src="/images/4/p26_iter_500.png" alt="Own ~500 iters" /><figcaption>~500 iters</figcaption></figure>
-        <figure><img src="/images/4/p26_iter_2000.png" alt="Own ~2000 iters" /><figcaption>~2000 iters</figcaption></figure>
-        <figure><img src="/images/4/p26_iter_6000.png" alt="Own ~6000 iters" /><figcaption>~6000 iters</figcaption></figure>
-        <figure><img src="/images/4/p26_iter_10000.png" alt="Own ~10000 iters" /><figcaption>~10000 iters</figcaption></figure>
-      </div>
-      <figure>
-        <img src="/images/4/p26_novel_views.gif" alt="Own dataset novel views GIF" />
-        <figcaption>Novel views of your object.</figcaption>
+        <img src="/images/4/p26_novel_views.gif" alt="Novel views of custom object" style="width:65%" />
+        <figcaption>Novel views: camera circling around [YOUR_OBJECT_DESCRIPTION]</figcaption>
       </figure>
     </section>
 
