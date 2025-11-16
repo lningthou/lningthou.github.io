@@ -198,36 +198,71 @@
       </figure>
       
 
-      <h3>Part 2.6 — Training with your own data</h3>
-      <p>I trained NeRF on my own captured dataset of [YOUR_OBJECT_DESCRIPTION]. This required several adjustments from the default Lego configuration: near/far bounds adjusted to near = [YOUR_NEAR] and far = [YOUR_FAR], image resolution [YOUR_RESOLUTION], number of samples [YOUR_N_SAMPLES] per ray, learning rate [YOUR_LR], and trained for [YOUR_TOTAL_ITERS] iterations.</p>
+      <h3>Part 2.6 — Training NeRF on Custom Dataset</h3>
+      <p>I trained NeRF on my own captured dataset of a Rick Sanchez Funko Pop figure. The main challenge was adjusting the near and far bounds to match my scene's depth range, as the object was much closer to the camera compared to the Lego dataset. I also increased the number of training iterations to ensure convergence.</p>
+      
+      <p>Training hyperparameters for the Rick Sanchez Funko Pop dataset:</p>
+      <table>
+        <tbody>
+          <tr><th>Iterations</th><td>10000</td></tr>
+          <tr><th>Batch Size</th><td>10000 rays</td></tr>
+          <tr><th>Samples per Ray</th><td>64</td></tr>
+          <tr><th>Near/Far Bounds</th><td>0.2 / 0.6</td></tr>
+          <tr><th>Learning Rate</th><td>5e-4</td></tr>
+          <tr><th>Network Width</th><td>256</td></tr>
+          <tr><th>Position Encoding (Lx)</th><td>10</td></tr>
+          <tr><th>Direction Encoding (Ld)</th><td>4</td></tr>
+          <tr><th>Stratified Sampling</th><td>Enabled with perturbation</td></tr>
+        </tbody>
+      </table>
+      
+      <p>Key changes from the Lego dataset: I adjusted the near/far bounds from 2.0/6.0 to 0.2/0.6 to account for the closer camera distance, and increased training iterations from 1000 to 10000 to allow the model more time to learn the details of the Funko Pop.</p>
+      
+      <p>Below are images showing training progression and intermediate renders of the model:</p>
       <figure>
-        <img src="/images/4/p26_train_loss.png" alt="Training loss curve" style="width:65%" />
-        <figcaption>Training loss over iterations on custom dataset</figcaption>
+        <img src="/images/4/rick_loss_val_psnr2.png" style="width:70%" />
       </figure>
-      <p>The renderings below show how the model progressively learned the geometry and appearance of my captured object:</p>
-      <div class="grid">
-        <figure>
-          <img src="/images/4/p26_iter_500.png" alt="~500 iterations" />
-          <figcaption>~500 iterations</figcaption>
-        </figure>
-        <figure>
-          <img src="/images/4/p26_iter_2000.png" alt="~2000 iterations" />
-          <figcaption>~2000 iterations</figcaption>
-        </figure>
-        <figure>
-          <img src="/images/4/p26_iter_6000.png" alt="~6000 iterations" />
-          <figcaption>~6000 iterations</figcaption>
-        </figure>
-        <figure>
-          <img src="/images/4/p26_iter_10000.png" alt="~10000 iterations" />
-          <figcaption>~10000 iterations</figcaption>
-        </figure>
-      </div>
       <figure>
-        <img src="/images/4/p26_novel_views.gif" alt="Novel views of custom object" style="width:65%" />
-        <figcaption>Novel views: camera circling around [YOUR_OBJECT_DESCRIPTION]</figcaption>
+        <img src="/images/4/rick_test_renders2.png"/>
+      </figure>
+      
+      <p>Below is a video showing novel views of the trained NeRF model:</p>
+      <figure>
+        <video autoplay loop muted playsinline style="width:25%; display:block;">
+          <source src="/images/4/rick_nerf2.mp4" type="video/mp4">
+        </video>
       </figure>
     </section>
+
+    <p>As an additional proof of concept, I also trained the model on the provided staff lafufu dataset:</p>
+      <p>Training hyperparameters for the lafufu dataset:</p>
+      <table>
+        <tbody>
+          <tr><th>Iterations</th><td>3000</td></tr>
+          <tr><th>Batch Size</th><td>10000 rays</td></tr>
+          <tr><th>Samples per Ray</th><td>64</td></tr>
+          <tr><th>Near/Far Bounds</th><td>0.02 / 0.5</td></tr>
+          <tr><th>Learning Rate</th><td>5e-4</td></tr>
+          <tr><th>Network Width</th><td>256</td></tr>
+          <tr><th>Position Encoding (Lx)</th><td>10</td></tr>
+          <tr><th>Direction Encoding (Ld)</th><td>4</td></tr>
+          <tr><th>Stratified Sampling</th><td>Enabled with perturbation</td></tr>
+        </tbody>
+      </table>
+      
+      <figure>
+        <img src="/images/4/lafufu_loss_val_psnr.png" style="width:70%" />
+      </figure>
+      
+      <figure>
+        <img src="/images/4/lafufu_test_renders.png"/>
+      </figure>
+      
+      <figure>
+        <video autoplay loop muted playsinline style="width:25%; display:block;">
+          <source src="/images/4/lafufu_nerf.mp4" type="video/mp4">
+        </video>
+      </figure>
 
     <section class="footer">
       <p>Course: CS180 — Intro to Computer Vision & Computational Photography • Project 4</p>
