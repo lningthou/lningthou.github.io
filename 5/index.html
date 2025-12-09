@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CS180 Project 5 – Diffusion Models</title>
+  <meta name="description" content="Project 5: Diffusion Models — Fun with Diffusion Models!" />
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: #111317;
+      --muted: #aab2c0;
+      --text: #e6edf3;
+      --accent: #66c0f4;
+      --grid-gap: 14px;
+      --radius: 16px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      background: linear-gradient(180deg, #0a0c10 0%, #0b0c10 100%);
+      color: var(--text);
+      line-height: 1.55;
+    }
+    header {
+      backdrop-filter: saturate(130%) blur(8px);
+      background: rgba(10,12,16,0.7);
+      border-bottom: 1px solid #1f232b;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 22px; }
+    h1 { font-size: clamp(28px, 3vw, 40px); letter-spacing: 0.2px; margin: 6px 0 4px; }
+    h2 { font-size: clamp(20px, 2.2vw, 28px); margin: 26px 0 10px; }
+    h3 { margin: 18px 0 8px; font-size: 18px; color: var(--accent); }
+    h4 { margin: 14px 0 6px; font-size: 16px; }
+    p { color: var(--text); opacity: 0.94; }
+    .muted { color: var(--muted); }
+    .card { background: var(--card); border: 1px solid #1f232b; border-radius: var(--radius); padding: 18px; }
+    code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .tag {
+      display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted);
+      padding: 6px 10px; border-radius: 999px; border: 1px solid #1f232b; background: rgba(255,255,255,0.02);
+    }
+    .grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--grid-gap);
+    }
+    .grid-3 { grid-template-columns: repeat(3, 1fr); }
+    .grid-6 { grid-template-columns: repeat(6, 1fr); }
+    .grid-2 { grid-template-columns: repeat(2, 1fr); }
+    figure { margin: 0; }
+    figcaption { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    img { display: block; width: 100%; height: auto; border-radius: 0; border: none; }
+    .row { display: flex; flex-wrap: wrap; gap: var(--grid-gap); }
+    .row > * { flex: 1 1 280px; }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #18202b; color: var(--accent); font-size: 12px; border: 1px solid #243142; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; border-bottom: 1px solid #232a33; text-align: left; font-size: 14px; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+    .footer { margin: 40px 0 20px; font-size: 13px; color: var(--muted); }
+    a { color: var(--accent); }
+    .callout { border-left: 3px solid var(--accent); padding: 8px 12px; background: rgba(102,192,244,0.07); border-radius: 8px; margin: 12px 0; }
+    .placeholder { background: rgba(102,192,244,0.1); border: 2px dashed var(--accent); padding: 20px; border-radius: 8px; text-align: center; color: var(--accent); font-style: italic; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap">
+      <div class="row" style="align-items:center; justify-content:space-between;">
+        <div>
+          <div class="tag">CS180 • Project 5 • Diffusion Models</div>
+          <h1>Fun with Diffusion Models!</h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+
+    <!-- ==================== PART A ==================== -->
+    <section style="margin: 40px 0 20px; text-align: center;">
+      <h1 style="font-size: 32px; color: var(--accent); border-bottom: 2px solid var(--accent); display: inline-block; padding-bottom: 8px;">Part A: The Power of Diffusion Models!</h1>
+    </section>
+
+    <!-- Part 0: Setup -->
+    <section class="card">
+      <h2>Part 0 — Setup</h2>
+      <p>For this project, I used the DeepFloyd IF diffusion model, a two-stage text-to-image model. I set up my Hugging Face account, accepted the model license, and configured my access token. The random seed I used throughout this project is: <code>&lt;PUT YOUR RANDOM SEED HERE&gt;</code></p>
+
+      <h3>Sample Outputs</h3>
+      <p>Below are three example prompts with their generated outputs, testing different <code>num_inference_steps</code> values.</p>
+
+      <h4>Prompt 1: "&lt;PUT PROMPT 1 HERE&gt;"</h4>
+      <div class="grid grid-3">
+        <figure>
+          <div class="placeholder">&lt;put image with num_inference_steps=X here&gt;</div>
+          <figcaption>num_inference_steps = X</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put image with num_inference_steps=Y here&gt;</div>
+          <figcaption>num_inference_steps = Y</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put image with num_inference_steps=Z here (optional)&gt;</div>
+          <figcaption>num_inference_steps = Z</figcaption>
+        </figure>
+      </div>
+
+      <h4>Prompt 2: "&lt;PUT PROMPT 2 HERE&gt;"</h4>
+      <div class="grid grid-3">
+        <figure>
+          <div class="placeholder">&lt;put image with num_inference_steps=X here&gt;</div>
+          <figcaption>num_inference_steps = X</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put image with num_inference_steps=Y here&gt;</div>
+          <figcaption>num_inference_steps = Y</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put image with num_inference_steps=Z here (optional)&gt;</div>
+          <figcaption>num_inference_steps = Z</figcaption>
+        </figure>
+      </div>
+
+      <h4>Prompt 3: "&lt;PUT PROMPT 3 HERE&gt;"</h4>
+      <div class="grid grid-3">
+        <figure>
+          <div class="placeholder">&lt;put image with num_inference_steps=X here&gt;</div>
+          <figcaption>num_inference_steps = X</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put image with num_inference_steps=Y here&gt;</div>
+          <figcaption>num_inference_steps = Y</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put image with num_inference_steps=Z here (optional)&gt;</div>
+          <figcaption>num_inference_steps = Z</figcaption>
+        </figure>
+      </div>
+
+      <h3>Reflection on Output Quality</h3>
+      <div class="placeholder">&lt;put reflection on the quality of the outputs relative to the prompts here - discuss how well the model captured your prompts and how num_inference_steps affected quality&gt;</div>
+    </section>
+
+    <!-- Part 1.1: Forward Process -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.1 — Implementing the Forward Process</h2>
+      <p>I implemented the <code>forward(im, t)</code> function which adds noise to a clean image according to the diffusion forward process equation. The amount of noise depends on the timestep t, with higher timesteps adding more noise.</p>
+
+      <h3>Test Image: Campanile</h3>
+      <figure style="width: 25%;">
+        <div class="placeholder">&lt;put original Campanile image here&gt;</div>
+        <figcaption>Original Campanile</figcaption>
+      </figure>
+
+      <h3>Noisy Images at Different Timesteps</h3>
+      <div class="grid grid-3">
+        <figure>
+          <div class="placeholder">&lt;put noisy image at t=250 here&gt;</div>
+          <figcaption>t = 250</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put noisy image at t=500 here&gt;</div>
+          <figcaption>t = 500</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put noisy image at t=750 here&gt;</div>
+          <figcaption>t = 750</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Part 1.2: Classical Denoising -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.2 — Classical Denoising</h2>
+      <p>I attempted to denoise the noisy images using classical Gaussian blur filtering. This serves as a baseline comparison for the learned denoising methods.</p>
+
+      <h3>Gaussian Blur Denoising Results</h3>
+      <div class="grid grid-3">
+        <figure>
+          <div class="placeholder">&lt;put Gaussian blur result for t=250 here&gt;</div>
+          <figcaption>t = 250 (Gaussian Blur)</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put Gaussian blur result for t=500 here&gt;</div>
+          <figcaption>t = 500 (Gaussian Blur)</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put Gaussian blur result for t=750 here&gt;</div>
+          <figcaption>t = 750 (Gaussian Blur)</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Part 1.3: One-Step Denoising -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.3 — One-Step Denoising</h2>
+      <p>I used the pretrained UNet to perform one-step denoising with the prompt "a high quality photo". The model estimates the noise and subtracts it to recover a cleaner image.</p>
+
+      <h3>One-Step Denoising Results</h3>
+      <div class="grid grid-3">
+        <figure>
+          <div class="placeholder">&lt;put original noisy image at t=250 here&gt;</div>
+          <figcaption>Noisy (t = 250)</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put original noisy image at t=500 here&gt;</div>
+          <figcaption>Noisy (t = 500)</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put original noisy image at t=750 here&gt;</div>
+          <figcaption>Noisy (t = 750)</figcaption>
+        </figure>
+      </div>
+      <div class="grid grid-3" style="margin-top: 14px;">
+        <figure>
+          <div class="placeholder">&lt;put one-step denoised result for t=250 here&gt;</div>
+          <figcaption>One-Step Denoised (t = 250)</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put one-step denoised result for t=500 here&gt;</div>
+          <figcaption>One-Step Denoised (t = 500)</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put one-step denoised result for t=750 here&gt;</div>
+          <figcaption>One-Step Denoised (t = 750)</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Part 1.4: Iterative Denoising -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.4 — Iterative Denoising</h2>
+      <p>I implemented iterative denoising using strided timesteps (starting from 990, with stride 30, reaching 0). This allows for gradual, step-by-step denoising that produces better results than one-step denoising.</p>
+
+      <h3>Denoising Progression (Every 5th Step)</h3>
+      <div class="placeholder">&lt;put images showing denoising progression at every 5th loop iteration here - can be a grid or strip of images showing the gradual denoising&gt;</div>
+
+      <h3>Comparison: Iterative vs One-Step vs Gaussian Blur</h3>
+      <div class="grid grid-3">
+        <figure>
+          <div class="placeholder">&lt;put iteratively denoised result here&gt;</div>
+          <figcaption>Iteratively Denoised</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put one-step denoised result here&gt;</div>
+          <figcaption>One-Step Denoised</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put Gaussian blur result here&gt;</div>
+          <figcaption>Gaussian Blur</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Part 1.5: Diffusion Model Sampling -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.5 — Diffusion Model Sampling</h2>
+      <p>I generated images from pure noise using iterative denoising with the prompt "a high quality photo". Starting from random noise, the model gradually refines it into a coherent image.</p>
+
+      <h3>5 Sampled Images from Pure Noise</h3>
+      <div class="grid">
+        <figure>
+          <div class="placeholder">&lt;put sampled image 1 here&gt;</div>
+          <figcaption>Sample 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put sampled image 2 here&gt;</div>
+          <figcaption>Sample 2</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put sampled image 3 here&gt;</div>
+          <figcaption>Sample 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put sampled image 4 here&gt;</div>
+          <figcaption>Sample 4</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put sampled image 5 here&gt;</div>
+          <figcaption>Sample 5</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Part 1.6: Classifier-Free Guidance -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.6 — Classifier-Free Guidance (CFG)</h2>
+      <p>I implemented Classifier-Free Guidance to improve image quality. CFG works by computing both a conditional and unconditional noise estimate, then extrapolating away from the unconditional estimate. I used a guidance scale of &gamma; = 7.</p>
+
+      <h3>5 Sampled Images with CFG (&gamma; = 7)</h3>
+      <div class="grid">
+        <figure>
+          <div class="placeholder">&lt;put CFG sampled image 1 here&gt;</div>
+          <figcaption>CFG Sample 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put CFG sampled image 2 here&gt;</div>
+          <figcaption>CFG Sample 2</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put CFG sampled image 3 here&gt;</div>
+          <figcaption>CFG Sample 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put CFG sampled image 4 here&gt;</div>
+          <figcaption>CFG Sample 4</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put CFG sampled image 5 here&gt;</div>
+          <figcaption>CFG Sample 5</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Part 1.7: Image-to-Image Translation -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.7 — Image-to-Image Translation</h2>
+      <p>Using the SDEdit algorithm, I took real images, added noise to them, and then denoised with the diffusion model. By starting the denoising process at different noise levels, we can control how much the output differs from the input.</p>
+
+      <h3>1.7.0 — Campanile SDEdit</h3>
+      <p>Editing the Campanile at different noise levels (i_start values):</p>
+      <div class="grid grid-6">
+        <figure>
+          <div class="placeholder">&lt;i_start=1&gt;</div>
+          <figcaption>i_start = 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=3&gt;</div>
+          <figcaption>i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=5&gt;</div>
+          <figcaption>i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=7&gt;</div>
+          <figcaption>i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=10&gt;</div>
+          <figcaption>i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=20&gt;</div>
+          <figcaption>i_start = 20</figcaption>
+        </figure>
+      </div>
+      <figure style="width: 20%; margin-top: 14px;">
+        <div class="placeholder">&lt;original Campanile&gt;</div>
+        <figcaption>Original</figcaption>
+      </figure>
+
+      <h3>Additional Test Image 1: &lt;PUT IMAGE NAME HERE&gt;</h3>
+      <div class="grid grid-6">
+        <figure>
+          <div class="placeholder">&lt;i_start=1&gt;</div>
+          <figcaption>i_start = 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=3&gt;</div>
+          <figcaption>i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=5&gt;</div>
+          <figcaption>i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=7&gt;</div>
+          <figcaption>i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=10&gt;</div>
+          <figcaption>i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=20&gt;</div>
+          <figcaption>i_start = 20</figcaption>
+        </figure>
+      </div>
+      <figure style="width: 20%; margin-top: 14px;">
+        <div class="placeholder">&lt;original image&gt;</div>
+        <figcaption>Original</figcaption>
+      </figure>
+
+      <h3>Additional Test Image 2: &lt;PUT IMAGE NAME HERE&gt;</h3>
+      <div class="grid grid-6">
+        <figure>
+          <div class="placeholder">&lt;i_start=1&gt;</div>
+          <figcaption>i_start = 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=3&gt;</div>
+          <figcaption>i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=5&gt;</div>
+          <figcaption>i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=7&gt;</div>
+          <figcaption>i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=10&gt;</div>
+          <figcaption>i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=20&gt;</div>
+          <figcaption>i_start = 20</figcaption>
+        </figure>
+      </div>
+      <figure style="width: 20%; margin-top: 14px;">
+        <div class="placeholder">&lt;original image&gt;</div>
+        <figcaption>Original</figcaption>
+      </figure>
+    </section>
+
+    <!-- Part 1.7.1: Hand-Drawn and Web Images -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.7.1 — Editing Hand-Drawn and Web Images</h2>
+      <p>I applied the SDEdit procedure to non-realistic images: one from the web and two hand-drawn sketches.</p>
+
+      <h3>Web Image: &lt;PUT DESCRIPTION HERE&gt;</h3>
+      <div class="grid grid-6">
+        <figure>
+          <div class="placeholder">&lt;i_start=1&gt;</div>
+          <figcaption>i_start = 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=3&gt;</div>
+          <figcaption>i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=5&gt;</div>
+          <figcaption>i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=7&gt;</div>
+          <figcaption>i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=10&gt;</div>
+          <figcaption>i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=20&gt;</div>
+          <figcaption>i_start = 20</figcaption>
+        </figure>
+      </div>
+      <figure style="width: 20%; margin-top: 14px;">
+        <div class="placeholder">&lt;original web image&gt;</div>
+        <figcaption>Original</figcaption>
+      </figure>
+
+      <h3>Hand-Drawn Image 1: &lt;PUT DESCRIPTION HERE&gt;</h3>
+      <div class="grid grid-6">
+        <figure>
+          <div class="placeholder">&lt;i_start=1&gt;</div>
+          <figcaption>i_start = 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=3&gt;</div>
+          <figcaption>i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=5&gt;</div>
+          <figcaption>i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=7&gt;</div>
+          <figcaption>i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=10&gt;</div>
+          <figcaption>i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=20&gt;</div>
+          <figcaption>i_start = 20</figcaption>
+        </figure>
+      </div>
+      <figure style="width: 20%; margin-top: 14px;">
+        <div class="placeholder">&lt;original hand-drawn image&gt;</div>
+        <figcaption>Original</figcaption>
+      </figure>
+
+      <h3>Hand-Drawn Image 2: &lt;PUT DESCRIPTION HERE&gt;</h3>
+      <div class="grid grid-6">
+        <figure>
+          <div class="placeholder">&lt;i_start=1&gt;</div>
+          <figcaption>i_start = 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=3&gt;</div>
+          <figcaption>i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=5&gt;</div>
+          <figcaption>i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=7&gt;</div>
+          <figcaption>i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=10&gt;</div>
+          <figcaption>i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=20&gt;</div>
+          <figcaption>i_start = 20</figcaption>
+        </figure>
+      </div>
+      <figure style="width: 20%; margin-top: 14px;">
+        <div class="placeholder">&lt;original hand-drawn image&gt;</div>
+        <figcaption>Original</figcaption>
+      </figure>
+    </section>
+
+    <!-- Part 1.7.2: Inpainting -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.7.2 — Inpainting</h2>
+      <p>I implemented inpainting by creating a binary mask and using the diffusion model to fill in the masked region while keeping the rest of the image intact.</p>
+
+      <h3>Campanile Inpainting</h3>
+      <div class="grid grid-3">
+        <figure>
+          <div class="placeholder">&lt;put original Campanile here&gt;</div>
+          <figcaption>Original</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put mask visualization here&gt;</div>
+          <figcaption>Mask</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put inpainted result here&gt;</div>
+          <figcaption>Inpainted</figcaption>
+        </figure>
+      </div>
+
+      <h3>Inpainting Example 2: &lt;PUT IMAGE NAME HERE&gt;</h3>
+      <div class="grid grid-3">
+        <figure>
+          <div class="placeholder">&lt;put original image here&gt;</div>
+          <figcaption>Original</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put mask visualization here&gt;</div>
+          <figcaption>Mask</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put inpainted result here&gt;</div>
+          <figcaption>Inpainted</figcaption>
+        </figure>
+      </div>
+
+      <h3>Inpainting Example 3: &lt;PUT IMAGE NAME HERE&gt;</h3>
+      <div class="grid grid-3">
+        <figure>
+          <div class="placeholder">&lt;put original image here&gt;</div>
+          <figcaption>Original</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put mask visualization here&gt;</div>
+          <figcaption>Mask</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put inpainted result here&gt;</div>
+          <figcaption>Inpainted</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Part 1.7.3: Text-Conditional Image-to-Image Translation -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.7.3 — Text-Conditional Image-to-Image Translation</h2>
+      <p>I guided the projection of images using text prompts instead of "a high quality photo". This allows for creative transformations of the source image based on the prompt.</p>
+
+      <h3>Campanile with Prompt: "&lt;PUT PROMPT HERE&gt;"</h3>
+      <div class="grid grid-6">
+        <figure>
+          <div class="placeholder">&lt;i_start=1&gt;</div>
+          <figcaption>i_start = 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=3&gt;</div>
+          <figcaption>i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=5&gt;</div>
+          <figcaption>i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=7&gt;</div>
+          <figcaption>i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=10&gt;</div>
+          <figcaption>i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=20&gt;</div>
+          <figcaption>i_start = 20</figcaption>
+        </figure>
+      </div>
+      <figure style="width: 20%; margin-top: 14px;">
+        <div class="placeholder">&lt;original Campanile&gt;</div>
+        <figcaption>Original</figcaption>
+      </figure>
+
+      <h3>Image 2 with Prompt: "&lt;PUT PROMPT HERE&gt;"</h3>
+      <div class="grid grid-6">
+        <figure>
+          <div class="placeholder">&lt;i_start=1&gt;</div>
+          <figcaption>i_start = 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=3&gt;</div>
+          <figcaption>i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=5&gt;</div>
+          <figcaption>i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=7&gt;</div>
+          <figcaption>i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=10&gt;</div>
+          <figcaption>i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=20&gt;</div>
+          <figcaption>i_start = 20</figcaption>
+        </figure>
+      </div>
+      <figure style="width: 20%; margin-top: 14px;">
+        <div class="placeholder">&lt;original image&gt;</div>
+        <figcaption>Original</figcaption>
+      </figure>
+
+      <h3>Image 3 with Prompt: "&lt;PUT PROMPT HERE&gt;"</h3>
+      <div class="grid grid-6">
+        <figure>
+          <div class="placeholder">&lt;i_start=1&gt;</div>
+          <figcaption>i_start = 1</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=3&gt;</div>
+          <figcaption>i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=5&gt;</div>
+          <figcaption>i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=7&gt;</div>
+          <figcaption>i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=10&gt;</div>
+          <figcaption>i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;i_start=20&gt;</div>
+          <figcaption>i_start = 20</figcaption>
+        </figure>
+      </div>
+      <figure style="width: 20%; margin-top: 14px;">
+        <div class="placeholder">&lt;original image&gt;</div>
+        <figcaption>Original</figcaption>
+      </figure>
+    </section>
+
+    <!-- Part 1.8: Visual Anagrams -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.8 — Visual Anagrams</h2>
+      <p>I implemented visual anagrams - optical illusions that show different images depending on orientation. I denoise with one prompt, flip the image, denoise with another prompt, flip back, and average the noise estimates.</p>
+
+      <h3>Visual Anagram 1</h3>
+      <p>Prompt 1: "&lt;PUT PROMPT 1 HERE&gt;" | Prompt 2 (flipped): "&lt;PUT PROMPT 2 HERE&gt;"</p>
+      <div class="grid grid-2">
+        <figure>
+          <div class="placeholder">&lt;put upright view here&gt;</div>
+          <figcaption>Upright: &lt;description&gt;</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put flipped view here&gt;</div>
+          <figcaption>Upside-Down: &lt;description&gt;</figcaption>
+        </figure>
+      </div>
+
+      <h3>Visual Anagram 2</h3>
+      <p>Prompt 1: "&lt;PUT PROMPT 1 HERE&gt;" | Prompt 2 (flipped): "&lt;PUT PROMPT 2 HERE&gt;"</p>
+      <div class="grid grid-2">
+        <figure>
+          <div class="placeholder">&lt;put upright view here&gt;</div>
+          <figcaption>Upright: &lt;description&gt;</figcaption>
+        </figure>
+        <figure>
+          <div class="placeholder">&lt;put flipped view here&gt;</div>
+          <figcaption>Upside-Down: &lt;description&gt;</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- Part 1.9: Hybrid Images -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.9 — Hybrid Images</h2>
+      <p>I created hybrid images by combining the low frequencies from one denoised image with the high frequencies from another. The result shows different images depending on viewing distance.</p>
+
+      <h3>Hybrid Image 1</h3>
+      <p>Low-frequency prompt: "&lt;PUT PROMPT HERE&gt;" | High-frequency prompt: "&lt;PUT PROMPT HERE&gt;"</p>
+      <figure style="width: 50%;">
+        <div class="placeholder">&lt;put hybrid image 1 here&gt;</div>
+        <figcaption>View up close to see the high-frequency image, step back to see the low-frequency image</figcaption>
+      </figure>
+
+      <h3>Hybrid Image 2</h3>
+      <p>Low-frequency prompt: "&lt;PUT PROMPT HERE&gt;" | High-frequency prompt: "&lt;PUT PROMPT HERE&gt;"</p>
+      <figure style="width: 50%;">
+        <div class="placeholder">&lt;put hybrid image 2 here&gt;</div>
+        <figcaption>View up close to see the high-frequency image, step back to see the low-frequency image</figcaption>
+      </figure>
+    </section>
+
+    <!-- ==================== PART B ==================== -->
+    <section style="margin: 60px 0 20px; text-align: center;">
+      <h1 style="font-size: 32px; color: var(--accent); border-bottom: 2px solid var(--accent); display: inline-block; padding-bottom: 8px;">Part B: Diffusion Models from Scratch!</h1>
+    </section>
+
+    <section class="card">
+      <div class="placeholder" style="padding: 40px;">&lt;Part B content will go here&gt;</div>
+    </section>
+
+    <section class="footer">
+      <p>Course: CS180 — Intro to Computer Vision & Computational Photography • Project 5</p>
+      <p><a href="../index.html">Back to Projects</a></p>
+    </section>
+  </main>
+</body>
+</html>
