@@ -256,9 +256,14 @@
       <h2>Part 1.4: Iterative Denoising</h2>
       <p>I implemented iterative denoising using strided timesteps (starting from 990, with stride 30, reaching 0). This allows for gradual, step-by-step denoising that produces better results than one-step denoising.</p>
 
-      <pre><code class="language-python">strided_timesteps = list(range(990, 0, -30)) + [0]</code></pre>
+      <pre><code class="language-python">strided_timesteps = [990]
+while strided_timesteps[-1] != 0:
+    strided_timesteps.append(strided_timesteps[-1] - 30)
+
+stage_1.scheduler.set_timesteps(timesteps=strided_timesteps)</code></pre>
 
       <pre><code class="language-python">def iterative_denoise(im_noisy, i_start, prompt_embeds, timesteps, display=True):
+    prompt_embeds = prompt_embeds.half().cuda()
     image = im_noisy
 
     with torch.no_grad():
@@ -278,13 +283,16 @@
             noise_est, predicted_variance = torch.split(model_output, image.shape[1], dim=1)
 
             x0 = (image - torch.sqrt(1 - alpha_cumprod) * noise_est) / torch.sqrt(alpha_cumprod)
-            term1 = torch.sqrt(alpha_cumprod_prev) * beta / (1 - alpha_cumprod) * x0
-            term2 = torch.sqrt(alpha) * (1 - alpha_cumprod_prev) / (1 - alpha_cumprod) * image
+            num1 = torch.sqrt(alpha_cumprod_prev) * beta
+            den1 = (1 - alpha_cumprod)
+            term1 = num1 / den1 * x0
+            num2 = torch.sqrt(alpha) * (1 - alpha_cumprod_prev)
+            term2 = num2 / den1 * image
             pred_prev_image = term1 + term2 + (add_variance(predicted_variance, t, image) - image)
 
             image = pred_prev_image
 
-        clean = image[0].cpu().detach().permute(1, 2, 0) / 2.0 + 0.5
+        clean = image[0].cpu().detach().cpu().permute(1, 2, 0) / 2.0 + 0.5
     return clean</code></pre>
 
       <h3>Denoising Progression (Every 5th Loop)</h3>
@@ -381,10 +389,10 @@
             alpha = alpha_cumprod / alpha_cumprod_prev
             beta = 1 - alpha
 
-            # Get conditional and unconditional noise estimates
             model_output = stage_1.unet(
                 image, t, encoder_hidden_states=prompt_embeds, return_dict=False
             )[0]
+
             uncond_model_output = stage_1.unet(
                 image, t, encoder_hidden_states=uncond_prompt_embeds, return_dict=False
             )[0]
@@ -392,17 +400,19 @@
             noise_est, predicted_variance = torch.split(model_output, image.shape[1], dim=1)
             uncond_noise_est, _ = torch.split(uncond_model_output, image.shape[1], dim=1)
 
-            # CFG: extrapolate away from unconditional estimate
             noise_est = uncond_noise_est + scale * (noise_est - uncond_noise_est)
 
             x0 = (image - torch.sqrt(1 - alpha_cumprod) * noise_est) / torch.sqrt(alpha_cumprod)
-            term1 = torch.sqrt(alpha_cumprod_prev) * beta / (1 - alpha_cumprod) * x0
-            term2 = torch.sqrt(alpha) * (1 - alpha_cumprod_prev) / (1 - alpha_cumprod) * image
+            num1 = torch.sqrt(alpha_cumprod_prev) * beta
+            den1 = (1 - alpha_cumprod)
+            term1 = num1 / den1 * x0
+            num2 = torch.sqrt(alpha) * (1 - alpha_cumprod_prev)
+            term2 = num2 / den1 * image
             pred_prev_image = term1 + term2 + (add_variance(predicted_variance, t, image) - image)
 
             image = pred_prev_image
 
-        clean = image[0].cpu().detach().permute(1, 2, 0) / 2.0 + 0.5
+        clean = image[0].cpu().detach().cpu().permute(1, 2, 0) / 2.0 + 0.5
     return clean</code></pre>
 
       <h3>5 Sampled Images with CFG (&gamma; = 7)</h3>
@@ -623,23 +633,14 @@
       <h2>Part 1.7.2: Inpainting</h2>
       <p>I implemented inpainting by creating a binary mask and using the diffusion model to fill in the masked region while keeping the rest of the image intact.</p>
 
-      <p>The <code>inpaint</code> function is similar to <code>iterative_denoise_cfg</code> with the key difference being that after each denoising step, we blend the denoised result with the original image using the mask:</p>
+      <p>The <code>inpaint</code> function is similar to <code>iterative_denoise_cfg</code>, but after each denoising step we blend the result with the original image using the mask. The key difference is:</p>
 
-      <pre><code class="language-python">def inpaint(original_image, mask, i_start, prompt_embeds, uncond_prompt_embeds,
-            timesteps, scale=7, display=True):
-    image = torch.randn_like(original_image).to(device).half()
-
-    with torch.no_grad():
-        for i in range(i_start, len(timesteps) - 1):
-            # ... same CFG denoising as iterative_denoise_cfg ...
-            # Key difference: after computing pred_prev_image, blend with original
-            if i < len(timesteps) - 2:
-                image = mask * pred_prev_image + (1 - mask) * forward(original_image, prev_t)
-            else:
-                image = mask * pred_prev_image + (1 - mask) * original_image
-
-        clean = image[0].cpu().detach().permute(1, 2, 0) / 2.0 + 0.5
-    return clean</code></pre>
+      <pre><code class="language-python"># After computing pred_prev_image via CFG denoising...
+# Blend: keep original outside mask, denoise inside mask
+if i < len(timesteps) - 2:
+    image = mask * pred_prev_image + (1 - mask) * forward(original_image, prev_t).half().to(device)
+else:
+    image = mask * pred_prev_image + (1 - mask) * original_image</code></pre>
 
       <h3>Inpainting Results</h3>
       <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
@@ -802,31 +803,21 @@
       <h2>Part 1.8: Visual Anagrams</h2>
       <p>I implemented visual anagrams - optical illusions that show different images depending on orientation. I denoise with one prompt, flip the image, denoise with another prompt, flip back, and average the noise estimates.</p>
 
-      <p>The <code>make_flip_illusion</code> function extends CFG denoising to use two prompts—one for the upright image and one for the flipped version:</p>
+      <p>The <code>make_flip_illusion</code> function extends CFG denoising to use two prompts - one for the upright image and one for the flipped version. The key difference is:</p>
 
-      <pre><code class="language-python">def make_flip_illusion(image, i_start, prompt_embeds, uncond_prompt_embeds,
-                       timesteps, scale=7):
-    p1_embeds = prompt_embeds[0:1]  # First prompt (upright)
-    p2_embeds = prompt_embeds[1:2]  # Second prompt (flipped)
+      <pre><code class="language-python"># Get CFG noise estimate for upright image with prompt 1
+eps_1 = uncond_noise_est_1 + scale * (noise_est_1 - uncond_noise_est_1)
 
-    with torch.no_grad():
-        for i in range(i_start, len(timesteps) - 1):
-            # ... compute alpha_cumprod, alpha, beta as before ...
+# Flip image, get CFG noise estimate with prompt 2, then flip back
+flipped_image = torch.flip(image, [2])
+# ... get model outputs for flipped_image with p2_embeds ...
+eps_2_flipped = uncond_noise_est_2 + scale * (noise_est_2 - uncond_noise_est_2)
+eps_2 = torch.flip(eps_2_flipped, [2])
 
-            # CFG noise estimate for upright image with prompt 1
-            eps_1 = uncond_noise_est_1 + scale * (noise_est_1 - uncond_noise_est_1)
-
-            # Flip image, get CFG noise estimate with prompt 2, flip back
-            flipped_image = torch.flip(image, [2])
-            # ... get model outputs for flipped image with p2_embeds ...
-            eps_2_flipped = uncond_noise_est_2 + scale * (noise_est_2 - uncond_noise_est_2)
-            eps_2 = torch.flip(eps_2_flipped, [2])
-
-            # Average the two noise estimates
-            noise_est = (eps_1 + eps_2) / 2.0
-
-            # ... continue with DDPM step using averaged noise_est ...
-    return clean</code></pre>
+# Average the two noise estimates
+noise_est = (eps_1 + eps_2) / 2.0
+var_2_unflipped = torch.flip(var_2, [2])
+predicted_variance = (var_1 + var_2_unflipped) / 2.0</code></pre>
 
       <h3>Visual Anagram 1</h3>
       <p>Prompt 1: "a photo of a tall ancient tree with deep roots" | Prompt 2 (flipped): "a photo of a tall sci fi rocket ready for launch"</p>
@@ -860,31 +851,20 @@
       <h2>Part 1.9: Hybrid Images</h2>
       <p>I created hybrid images by combining the low frequencies from one denoised image with the high frequencies from another. The result shows different images depending on viewing distance.</p>
 
-      <p>The <code>make_hybrids</code> function is similar to visual anagrams but instead of flipping, it extracts low frequencies from one prompt's noise estimate and high frequencies from another:</p>
+      <p>The <code>make_hybrids</code> function is similar to visual anagrams but instead of flipping, it extracts low frequencies from one prompt's noise estimate and high frequencies from another. The key difference is:</p>
 
-      <pre><code class="language-python">def make_hybrids(image, i_start, prompt_embeds, uncond_prompt_embeds,
-                 timesteps, scale=7):
-    p1_embeds = prompt_embeds[0:1]  # Low-frequency prompt
-    p2_embeds = prompt_embeds[1:2]  # High-frequency prompt
+      <pre><code class="language-python"># CFG noise estimates for both prompts
+eps_1 = uncond_noise_est_1 + scale * (noise_est_1 - uncond_noise_est_1)
+eps_2 = uncond_noise_est_2 + scale * (noise_est_2 - uncond_noise_est_2)
 
-    with torch.no_grad():
-        for i in range(i_start, len(timesteps) - 1):
-            # ... compute alpha_cumprod, alpha, beta as before ...
+# Extract low frequencies from eps_1, high frequencies from eps_2
+eps_low = torchvision.transforms.functional.gaussian_blur(eps_1, kernel_size=33, sigma=2)
+eps_2_blurred = torchvision.transforms.functional.gaussian_blur(eps_2, kernel_size=33, sigma=2)
+eps_high = eps_2 - eps_2_blurred
 
-            # CFG noise estimates for both prompts
-            eps_1 = uncond_noise_est_1 + scale * (noise_est_1 - uncond_noise_est_1)
-            eps_2 = uncond_noise_est_2 + scale * (noise_est_2 - uncond_noise_est_2)
-
-            # Extract low frequencies from eps_1, high frequencies from eps_2
-            eps_low = gaussian_blur(eps_1, kernel_size=33, sigma=2)
-            eps_2_blurred = gaussian_blur(eps_2, kernel_size=33, sigma=2)
-            eps_high = eps_2 - eps_2_blurred
-
-            # Combine low and high frequency components
-            noise_est = eps_low + eps_high
-
-            # ... continue with DDPM step using combined noise_est ...
-    return clean</code></pre>
+# Combine low and high frequency components
+noise_est = eps_low + eps_high
+predicted_variance = (var_1 + var_2) / 2.0</code></pre>
 
       <h3>Hybrid Image 1</h3>
       <p>Low-frequency prompt: "a hyper realistic paper cutout diorama of a forest" | High-frequency prompt: "a photo of the statue of liberty made of green modeling clay"</p>
