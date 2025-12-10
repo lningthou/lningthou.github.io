@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.min.css">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CS180 Project 5 – Diffusion Models</title>
@@ -29,7 +30,7 @@
       background: rgba(10,12,16,0.7);
       border-bottom: 1px solid #1f232b;
     }
-    .wrap { max-width: 1000px; margin: 0 auto; padding: 22px; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 22px; }
     h1 { font-size: clamp(28px, 3vw, 40px); letter-spacing: 0.2px; margin: 6px 0 4px; }
     h2 { font-size: clamp(20px, 2.2vw, 28px); margin: 26px 0 10px; }
     h3 { margin: 18px 0 8px; font-size: 18px; color: var(--accent); }
@@ -38,6 +39,7 @@
     .muted { color: var(--muted); }
     .card { background: var(--card); border: 1px solid #1f232b; border-radius: var(--radius); padding: 18px; }
     code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    pre code { font-size: 12px; }
     .tag {
       display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted);
       padding: 6px 10px; border-radius: 999px; border: 1px solid #1f232b; background: rgba(255,255,255,0.02);
@@ -85,87 +87,91 @@
 
     <!-- Part 0: Setup -->
     <section class="card">
-      <h2>Part 0 — Setup</h2>
-      <p>For this project, I used the DeepFloyd IF diffusion model, a two-stage text-to-image model. I set up my Hugging Face account, accepted the model license, and configured my access token. The random seed I used throughout this project is: <code>&lt;PUT YOUR RANDOM SEED HERE&gt;</code></p>
+      <h2>Part 0: Setup</h2>
+      <p>The random seed I used throughout this project is: <code>67</code></p>
 
       <h3>Sample Outputs</h3>
       <p>Below are three example prompts with their generated outputs, testing different <code>num_inference_steps</code> values.</p>
 
-      <h4>Prompt 1: "&lt;PUT PROMPT 1 HERE&gt;"</h4>
+      <h4>Prompt 1: "a renaissance oil painting of socrates wearing a large vr headset covering his eyes"</h4>
       <div class="grid grid-3">
         <figure>
-          <div class="placeholder">&lt;put image with num_inference_steps=X here&gt;</div>
-          <figcaption>num_inference_steps = X</figcaption>
+          <img src="/images/5/socrates_10.png" alt="Socrates VR - 10 steps">
+          <figcaption>num_inference_steps = 10</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put image with num_inference_steps=Y here&gt;</div>
-          <figcaption>num_inference_steps = Y</figcaption>
+          <img src="/images/5/socrates_20.png" alt="Socrates VR - 20 steps">
+          <figcaption>num_inference_steps = 20</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put image with num_inference_steps=Z here (optional)&gt;</div>
-          <figcaption>num_inference_steps = Z</figcaption>
+          <img src="/images/5/socrates_50.png" alt="Socrates VR - 50 steps">
+          <figcaption>num_inference_steps = 50</figcaption>
         </figure>
       </div>
 
-      <h4>Prompt 2: "&lt;PUT PROMPT 2 HERE&gt;"</h4>
+      <h4>Prompt 2: "a hyper realistic paper cutout diorama of a forest"</h4>
       <div class="grid grid-3">
         <figure>
-          <div class="placeholder">&lt;put image with num_inference_steps=X here&gt;</div>
-          <figcaption>num_inference_steps = X</figcaption>
+          <img src="/images/5/forest_10.png" alt="Forest diorama - 10 steps">
+          <figcaption>num_inference_steps = 10</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put image with num_inference_steps=Y here&gt;</div>
-          <figcaption>num_inference_steps = Y</figcaption>
+          <img src="/images/5/forest_20.png" alt="Forest diorama - 20 steps">
+          <figcaption>num_inference_steps = 20</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put image with num_inference_steps=Z here (optional)&gt;</div>
-          <figcaption>num_inference_steps = Z</figcaption>
+          <img src="/images/5/forest_50.png" alt="Forest diorama - 50 steps">
+          <figcaption>num_inference_steps = 50</figcaption>
         </figure>
       </div>
 
-      <h4>Prompt 3: "&lt;PUT PROMPT 3 HERE&gt;"</h4>
+      <h4>Prompt 3: "a cinematic photo of a neon city in the rain at night"</h4>
       <div class="grid grid-3">
         <figure>
-          <div class="placeholder">&lt;put image with num_inference_steps=X here&gt;</div>
-          <figcaption>num_inference_steps = X</figcaption>
+          <img src="/images/5/city_10.png" alt="Neon city - 10 steps">
+          <figcaption>num_inference_steps = 10</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put image with num_inference_steps=Y here&gt;</div>
-          <figcaption>num_inference_steps = Y</figcaption>
+          <img src="/images/5/city_20.png" alt="Neon city - 20 steps">
+          <figcaption>num_inference_steps = 20</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put image with num_inference_steps=Z here (optional)&gt;</div>
-          <figcaption>num_inference_steps = Z</figcaption>
+          <img src="/images/5/city_50.png" alt="Neon city - 50 steps">
+          <figcaption>num_inference_steps = 50</figcaption>
         </figure>
       </div>
 
       <h3>Reflection on Output Quality</h3>
-      <div class="placeholder">&lt;put reflection on the quality of the outputs relative to the prompts here - discuss how well the model captured your prompts and how num_inference_steps affected quality&gt;</div>
+      <p>Increasing <code>num_inference_steps</code> significantly improved prompt adherence for complex subjects. For the Socrates and Diorama prompts, lower steps <code>10</code>–<code>20</code> failed to generate key constraints, rendering a headband or generic 3D terrain instead. Only at <code>50</code> steps did the model correctly render the VR headset covering the eyes and the distinct texture of the paper cutouts. Conversely, for the Neon City prompt, higher steps resulted in excessive saturation and sharpness. The lower step count <code>10</code> produced a softer, more photorealistic effect.</p>
     </section>
 
     <!-- Part 1.1: Forward Process -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.1 — Implementing the Forward Process</h2>
-      <p>I implemented the <code>forward(im, t)</code> function which adds noise to a clean image according to the diffusion forward process equation. The amount of noise depends on the timestep t, with higher timesteps adding more noise.</p>
+      <h2>Part 1.1: Implementing the Forward Process</h2>
+      <p>I implemented the <code>forward(im, t)</code> function which adds noise to a clean image according to the diffusion forward process equation. The amount of noise depends on the timestep <code>t</code>, with higher timesteps adding more noise.</p>
 
-      <h3>Test Image: Campanile</h3>
-      <figure style="width: 25%;">
-        <div class="placeholder">&lt;put original Campanile image here&gt;</div>
-        <figcaption>Original Campanile</figcaption>
-      </figure>
+      <pre><code class="language-python">def forward(im, t):
+    with torch.no_grad():
+        noise = torch.randn_like(im)
+        im_noisy = torch.sqrt(alphas_cumprod[t]) * im + torch.sqrt(1 - alphas_cumprod[t]) * noise
+    return im_noisy</code></pre>
 
-      <h3>Noisy Images at Different Timesteps</h3>
-      <div class="grid grid-3">
+      <h3>Original and Noisy Images at Different Timesteps</h3>
+      <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
         <figure>
-          <div class="placeholder">&lt;put noisy image at t=250 here&gt;</div>
+          <img src="/images/5/campanile.png" alt="Original Campanile">
+          <figcaption>Original</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/campanile_250.png" alt="Campanile at t=250">
           <figcaption>t = 250</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put noisy image at t=500 here&gt;</div>
+          <img src="/images/5/campanile_500.png" alt="Campanile at t=500">
           <figcaption>t = 500</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put noisy image at t=750 here&gt;</div>
+          <img src="/images/5/campanile_750.png" alt="Campanile at t=750">
           <figcaption>t = 750</figcaption>
         </figure>
       </div>
@@ -173,82 +179,154 @@
 
     <!-- Part 1.2: Classical Denoising -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.2 — Classical Denoising</h2>
+      <h2>Part 1.2: Classical Denoising</h2>
       <p>I attempted to denoise the noisy images using classical Gaussian blur filtering. This serves as a baseline comparison for the learned denoising methods.</p>
 
       <h3>Gaussian Blur Denoising Results</h3>
       <div class="grid grid-3">
         <figure>
-          <div class="placeholder">&lt;put Gaussian blur result for t=250 here&gt;</div>
-          <figcaption>t = 250 (Gaussian Blur)</figcaption>
+          <img src="/images/5/campanile_250.png" alt="Noisy Campanile at t=250">
+          <figcaption>t = 250</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put Gaussian blur result for t=500 here&gt;</div>
-          <figcaption>t = 500 (Gaussian Blur)</figcaption>
+          <img src="/images/5/campanile_500.png" alt="Noisy Campanile at t=500">
+          <figcaption>t = 500</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put Gaussian blur result for t=750 here&gt;</div>
-          <figcaption>t = 750 (Gaussian Blur)</figcaption>
+          <img src="/images/5/campanile_750.png" alt="Noisy Campanile at t=750">
+          <figcaption>t = 750</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/d_campanile_250.png" alt="Gaussian blur t=250">
+          <figcaption>Gaussian Blur (kernel=7, σ=1.0)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/d_campanile_500.png" alt="Gaussian blur t=500">
+          <figcaption>Gaussian Blur (kernel=13, σ=2.0)</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/d_campanile_750.png" alt="Gaussian blur t=750">
+          <figcaption>Gaussian Blur (kernel=19, σ=3.0)</figcaption>
         </figure>
       </div>
     </section>
 
     <!-- Part 1.3: One-Step Denoising -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.3 — One-Step Denoising</h2>
-      <p>I used the pretrained UNet to perform one-step denoising with the prompt "a high quality photo". The model estimates the noise and subtracts it to recover a cleaner image.</p>
+      <h2>Part 1.3: One-Step Denoising</h2>
+      <p>I used the pretrained UNet to perform one-step denoising with the prompt "a high quality picture". The model predicts the noise, which we then use to recover <code>x0</code>.</p>
+
+      <h3>Original Image</h3>
+      <figure style="width: 25%;">
+        <img src="/images/5/campanile.png" alt="Original Campanile">
+        <figcaption>Original Campanile</figcaption>
+      </figure>
 
       <h3>One-Step Denoising Results</h3>
       <div class="grid grid-3">
         <figure>
-          <div class="placeholder">&lt;put original noisy image at t=250 here&gt;</div>
-          <figcaption>Noisy (t = 250)</figcaption>
+          <img src="/images/5/campanile_250.png" alt="Noisy Campanile at t=250">
+          <figcaption>t = 250</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put original noisy image at t=500 here&gt;</div>
-          <figcaption>Noisy (t = 500)</figcaption>
+          <img src="/images/5/campanile_500.png" alt="Noisy Campanile at t=500">
+          <figcaption>t = 500</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put original noisy image at t=750 here&gt;</div>
-          <figcaption>Noisy (t = 750)</figcaption>
-        </figure>
-      </div>
-      <div class="grid grid-3" style="margin-top: 14px;">
-        <figure>
-          <div class="placeholder">&lt;put one-step denoised result for t=250 here&gt;</div>
-          <figcaption>One-Step Denoised (t = 250)</figcaption>
+          <img src="/images/5/campanile_750.png" alt="Noisy Campanile at t=750">
+          <figcaption>t = 750</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put one-step denoised result for t=500 here&gt;</div>
-          <figcaption>One-Step Denoised (t = 500)</figcaption>
+          <img src="/images/5/osd_campanile_250.png" alt="One-Step Denoised t=250">
+          <figcaption>One-Step Denoised t = 250</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put one-step denoised result for t=750 here&gt;</div>
-          <figcaption>One-Step Denoised (t = 750)</figcaption>
+          <img src="/images/5/osd_campanile_500.png" alt="One-Step Denoised t=500">
+          <figcaption>One-Step Denoised t = 500</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/osd_campanile_750.png" alt="One-Step Denoised t=750">
+          <figcaption>One-Step Denoised t = 750</figcaption>
         </figure>
       </div>
     </section>
 
     <!-- Part 1.4: Iterative Denoising -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.4 — Iterative Denoising</h2>
+      <h2>Part 1.4: Iterative Denoising</h2>
       <p>I implemented iterative denoising using strided timesteps (starting from 990, with stride 30, reaching 0). This allows for gradual, step-by-step denoising that produces better results than one-step denoising.</p>
 
-      <h3>Denoising Progression (Every 5th Step)</h3>
-      <div class="placeholder">&lt;put images showing denoising progression at every 5th loop iteration here - can be a grid or strip of images showing the gradual denoising&gt;</div>
+      <pre><code class="language-python">strided_timesteps = list(range(990, 0, -30)) + [0]</code></pre>
 
-      <h3>Comparison: Iterative vs One-Step vs Gaussian Blur</h3>
-      <div class="grid grid-3">
+      <pre><code class="language-python">def iterative_denoise(im_noisy, i_start, prompt_embeds, timesteps, display=True):
+    image = im_noisy
+
+    with torch.no_grad():
+        for i in range(i_start, len(timesteps) - 1):
+            t = timesteps[i]
+            prev_t = timesteps[i+1]
+
+            alpha_cumprod = alphas_cumprod[t]
+            alpha_cumprod_prev = alphas_cumprod[prev_t]
+            alpha = alpha_cumprod / alpha_cumprod_prev
+            beta = 1 - alpha
+
+            model_output = stage_1.unet(
+                image, t, encoder_hidden_states=prompt_embeds, return_dict=False
+            )[0]
+
+            noise_est, predicted_variance = torch.split(model_output, image.shape[1], dim=1)
+
+            x0 = (image - torch.sqrt(1 - alpha_cumprod) * noise_est) / torch.sqrt(alpha_cumprod)
+            term1 = torch.sqrt(alpha_cumprod_prev) * beta / (1 - alpha_cumprod) * x0
+            term2 = torch.sqrt(alpha) * (1 - alpha_cumprod_prev) / (1 - alpha_cumprod) * image
+            pred_prev_image = term1 + term2 + (add_variance(predicted_variance, t, image) - image)
+
+            image = pred_prev_image
+
+        clean = image[0].cpu().detach().permute(1, 2, 0) / 2.0 + 0.5
+    return clean</code></pre>
+
+      <h3>Denoising Progression (Every 5th Loop)</h3>
+      <div class="grid" style="grid-template-columns: repeat(5, 1fr);">
         <figure>
-          <div class="placeholder">&lt;put iteratively denoised result here&gt;</div>
+          <img src="/images/5/i10_campanile.png" alt="Denoising at i=10, t=690">
+          <figcaption>i = 10, t = 690</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/i15_campanile.png" alt="Denoising at i=15, t=540">
+          <figcaption>i = 15, t = 540</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/i20_campanile.png" alt="Denoising at i=20, t=390">
+          <figcaption>i = 20, t = 390</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/i25_campanile.png" alt="Denoising at i=25, t=240">
+          <figcaption>i = 25, t = 240</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/i30_campanile.png" alt="Denoising at i=30, t=90">
+          <figcaption>i = 30, t = 90</figcaption>
+        </figure>
+      </div>
+
+      <h3>Comparison: Original vs Iterative vs One-Step vs Gaussian Blur</h3>
+      <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
+        <figure>
+          <img src="/images/5/campanile.png" alt="Original Campanile">
+          <figcaption>Original</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/i_campanile.png" alt="Iteratively Denoised">
           <figcaption>Iteratively Denoised</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put one-step denoised result here&gt;</div>
+          <img src="/images/5/osd_campanile.png" alt="One-Step Denoised">
           <figcaption>One-Step Denoised</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put Gaussian blur result here&gt;</div>
+          <img src="/images/5/d_campanile.png" alt="Gaussian Blur">
           <figcaption>Gaussian Blur</figcaption>
         </figure>
       </div>
@@ -256,29 +334,29 @@
 
     <!-- Part 1.5: Diffusion Model Sampling -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.5 — Diffusion Model Sampling</h2>
-      <p>I generated images from pure noise using iterative denoising with the prompt "a high quality photo". Starting from random noise, the model gradually refines it into a coherent image.</p>
+      <h2>Part 1.5: Diffusion Model Sampling</h2>
+      <p>I generated images from pure noise using iterative denoising with the prompt "a high quality picture". Starting from random noise, the model gradually refines it into a coherent image.</p>
 
       <h3>5 Sampled Images from Pure Noise</h3>
-      <div class="grid">
+      <div class="grid" style="grid-template-columns: repeat(5, 1fr);">
         <figure>
-          <div class="placeholder">&lt;put sampled image 1 here&gt;</div>
+          <img src="/images/5/sample1.png" alt="Sample 1">
           <figcaption>Sample 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put sampled image 2 here&gt;</div>
+          <img src="/images/5/sample2.png" alt="Sample 2">
           <figcaption>Sample 2</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put sampled image 3 here&gt;</div>
+          <img src="/images/5/sample3.png" alt="Sample 3">
           <figcaption>Sample 3</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put sampled image 4 here&gt;</div>
+          <img src="/images/5/sample4.png" alt="Sample 4">
           <figcaption>Sample 4</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put sampled image 5 here&gt;</div>
+          <img src="/images/5/sample5.png" alt="Sample 5">
           <figcaption>Sample 5</figcaption>
         </figure>
       </div>
@@ -286,29 +364,67 @@
 
     <!-- Part 1.6: Classifier-Free Guidance -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.6 — Classifier-Free Guidance (CFG)</h2>
-      <p>I implemented Classifier-Free Guidance to improve image quality. CFG works by computing both a conditional and unconditional noise estimate, then extrapolating away from the unconditional estimate. I used a guidance scale of &gamma; = 7.</p>
+      <h2>Part 1.6: Classifier-Free Guidance (CFG)</h2>
+      <p>I implemented Classifier-Free Guidance to improve image quality. CFG works by computing both a conditional and unconditional noise estimate, then extrapolating away from the unconditional estimate. I used the prompt "a high quality picture" with a guidance scale of &gamma; = 7.</p>
+
+      <pre><code class="language-python">def iterative_denoise_cfg(im_noisy, i_start, prompt_embeds, uncond_prompt_embeds,
+                          timesteps, scale=7, display=True):
+    image = im_noisy
+
+    with torch.no_grad():
+        for i in range(i_start, len(timesteps) - 1):
+            t = timesteps[i]
+            prev_t = timesteps[i+1]
+
+            alpha_cumprod = alphas_cumprod[t]
+            alpha_cumprod_prev = alphas_cumprod[prev_t]
+            alpha = alpha_cumprod / alpha_cumprod_prev
+            beta = 1 - alpha
+
+            # Get conditional and unconditional noise estimates
+            model_output = stage_1.unet(
+                image, t, encoder_hidden_states=prompt_embeds, return_dict=False
+            )[0]
+            uncond_model_output = stage_1.unet(
+                image, t, encoder_hidden_states=uncond_prompt_embeds, return_dict=False
+            )[0]
+
+            noise_est, predicted_variance = torch.split(model_output, image.shape[1], dim=1)
+            uncond_noise_est, _ = torch.split(uncond_model_output, image.shape[1], dim=1)
+
+            # CFG: extrapolate away from unconditional estimate
+            noise_est = uncond_noise_est + scale * (noise_est - uncond_noise_est)
+
+            x0 = (image - torch.sqrt(1 - alpha_cumprod) * noise_est) / torch.sqrt(alpha_cumprod)
+            term1 = torch.sqrt(alpha_cumprod_prev) * beta / (1 - alpha_cumprod) * x0
+            term2 = torch.sqrt(alpha) * (1 - alpha_cumprod_prev) / (1 - alpha_cumprod) * image
+            pred_prev_image = term1 + term2 + (add_variance(predicted_variance, t, image) - image)
+
+            image = pred_prev_image
+
+        clean = image[0].cpu().detach().permute(1, 2, 0) / 2.0 + 0.5
+    return clean</code></pre>
 
       <h3>5 Sampled Images with CFG (&gamma; = 7)</h3>
-      <div class="grid">
+      <div class="grid" style="grid-template-columns: repeat(5, 1fr);">
         <figure>
-          <div class="placeholder">&lt;put CFG sampled image 1 here&gt;</div>
+          <img src="/images/5/cfg_sample1.png" alt="CFG Sample 1">
           <figcaption>CFG Sample 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put CFG sampled image 2 here&gt;</div>
+          <img src="/images/5/cfg_sample2.png" alt="CFG Sample 2">
           <figcaption>CFG Sample 2</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put CFG sampled image 3 here&gt;</div>
+          <img src="/images/5/cfg_sample3.png" alt="CFG Sample 3">
           <figcaption>CFG Sample 3</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put CFG sampled image 4 here&gt;</div>
+          <img src="/images/5/cfg_sample4.png" alt="CFG Sample 4">
           <figcaption>CFG Sample 4</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put CFG sampled image 5 here&gt;</div>
+          <img src="/images/5/cfg_sample5.png" alt="CFG Sample 5">
           <figcaption>CFG Sample 5</figcaption>
         </figure>
       </div>
@@ -316,258 +432,263 @@
 
     <!-- Part 1.7: Image-to-Image Translation -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.7 — Image-to-Image Translation</h2>
+      <h2>Part 1.7: Image-to-Image Translation</h2>
       <p>Using the SDEdit algorithm, I took real images, added noise to them, and then denoised with the diffusion model. By starting the denoising process at different noise levels, we can control how much the output differs from the input.</p>
 
-      <h3>1.7.0 — Campanile SDEdit</h3>
-      <p>Editing the Campanile at different noise levels (i_start values):</p>
-      <div class="grid grid-6">
+      <h3>SDEdit Results</h3>
+      <div class="grid" style="grid-template-columns: repeat(7, 1fr);">
         <figure>
-          <div class="placeholder">&lt;i_start=1&gt;</div>
-          <figcaption>i_start = 1</figcaption>
+          <img src="/images/5/sd1_campanile.png" alt="Campanile SDEdit i_start=1">
+          <figcaption>SDEdit i_start = 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=3&gt;</div>
-          <figcaption>i_start = 3</figcaption>
+          <img src="/images/5/sd3_campanile.png" alt="Campanile SDEdit i_start=3">
+          <figcaption>SDEdit i_start = 3</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=5&gt;</div>
-          <figcaption>i_start = 5</figcaption>
+          <img src="/images/5/sd5_campanile.png" alt="Campanile SDEdit i_start=5">
+          <figcaption>SDEdit i_start = 5</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=7&gt;</div>
-          <figcaption>i_start = 7</figcaption>
+          <img src="/images/5/sd7_campanile.png" alt="Campanile SDEdit i_start=7">
+          <figcaption>SDEdit i_start = 7</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=10&gt;</div>
-          <figcaption>i_start = 10</figcaption>
+          <img src="/images/5/sd10_campanile.png" alt="Campanile SDEdit i_start=10">
+          <figcaption>SDEdit i_start = 10</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=20&gt;</div>
-          <figcaption>i_start = 20</figcaption>
-        </figure>
-      </div>
-      <figure style="width: 20%; margin-top: 14px;">
-        <div class="placeholder">&lt;original Campanile&gt;</div>
-        <figcaption>Original</figcaption>
-      </figure>
-
-      <h3>Additional Test Image 1: &lt;PUT IMAGE NAME HERE&gt;</h3>
-      <div class="grid grid-6">
-        <figure>
-          <div class="placeholder">&lt;i_start=1&gt;</div>
-          <figcaption>i_start = 1</figcaption>
+          <img src="/images/5/sd20_campanile.png" alt="Campanile SDEdit i_start=20">
+          <figcaption>SDEdit i_start = 20</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=3&gt;</div>
-          <figcaption>i_start = 3</figcaption>
+          <img src="/images/5/campanile.png" alt="Campanile">
+          <figcaption>Campanile</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=5&gt;</div>
-          <figcaption>i_start = 5</figcaption>
+          <img src="/images/5/sd1_parthenon.png" alt="Parthenon SDEdit i_start=1">
+          <figcaption>SDEdit i_start = 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=7&gt;</div>
-          <figcaption>i_start = 7</figcaption>
+          <img src="/images/5/sd3_parthenon.png" alt="Parthenon SDEdit i_start=3">
+          <figcaption>SDEdit i_start = 3</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=10&gt;</div>
-          <figcaption>i_start = 10</figcaption>
+          <img src="/images/5/sd5_parthenon.png" alt="Parthenon SDEdit i_start=5">
+          <figcaption>SDEdit i_start = 5</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=20&gt;</div>
-          <figcaption>i_start = 20</figcaption>
-        </figure>
-      </div>
-      <figure style="width: 20%; margin-top: 14px;">
-        <div class="placeholder">&lt;original image&gt;</div>
-        <figcaption>Original</figcaption>
-      </figure>
-
-      <h3>Additional Test Image 2: &lt;PUT IMAGE NAME HERE&gt;</h3>
-      <div class="grid grid-6">
-        <figure>
-          <div class="placeholder">&lt;i_start=1&gt;</div>
-          <figcaption>i_start = 1</figcaption>
+          <img src="/images/5/sd7_parthenon.png" alt="Parthenon SDEdit i_start=7">
+          <figcaption>SDEdit i_start = 7</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=3&gt;</div>
-          <figcaption>i_start = 3</figcaption>
+          <img src="/images/5/sd10_parthenon.png" alt="Parthenon SDEdit i_start=10">
+          <figcaption>SDEdit i_start = 10</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=5&gt;</div>
-          <figcaption>i_start = 5</figcaption>
+          <img src="/images/5/sd20_parthenon.png" alt="Parthenon SDEdit i_start=20">
+          <figcaption>SDEdit i_start = 20</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=7&gt;</div>
-          <figcaption>i_start = 7</figcaption>
+          <img src="/images/5/parthenon.png" alt="Parthenon">
+          <figcaption>Parthenon</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=10&gt;</div>
-          <figcaption>i_start = 10</figcaption>
+          <img src="/images/5/sd1_bear.png" alt="Bear SDEdit i_start=1">
+          <figcaption>SDEdit i_start = 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=20&gt;</div>
-          <figcaption>i_start = 20</figcaption>
+          <img src="/images/5/sd3_bear.png" alt="Bear SDEdit i_start=3">
+          <figcaption>SDEdit i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/sd5_bear.png" alt="Bear SDEdit i_start=5">
+          <figcaption>SDEdit i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/sd7_bear.png" alt="Bear SDEdit i_start=7">
+          <figcaption>SDEdit i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/sd10_bear.png" alt="Bear SDEdit i_start=10">
+          <figcaption>SDEdit i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/sd20_bear.png" alt="Bear SDEdit i_start=20">
+          <figcaption>SDEdit i_start = 20</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/bear.png" alt="Bear">
+          <figcaption>Bear</figcaption>
         </figure>
       </div>
-      <figure style="width: 20%; margin-top: 14px;">
-        <div class="placeholder">&lt;original image&gt;</div>
-        <figcaption>Original</figcaption>
-      </figure>
     </section>
 
     <!-- Part 1.7.1: Hand-Drawn and Web Images -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.7.1 — Editing Hand-Drawn and Web Images</h2>
+      <h2>Part 1.7.1: Editing Hand-Drawn and Web Images</h2>
       <p>I applied the SDEdit procedure to non-realistic images: one from the web and two hand-drawn sketches.</p>
 
-      <h3>Web Image: &lt;PUT DESCRIPTION HERE&gt;</h3>
-      <div class="grid grid-6">
+      <h3>SDEdit Results on Non-Realistic Images</h3>
+      <div class="grid" style="grid-template-columns: repeat(7, 1fr);">
         <figure>
-          <div class="placeholder">&lt;i_start=1&gt;</div>
-          <figcaption>i_start = 1</figcaption>
+          <img src="/images/5/sd1_braun.png" alt="Braun SDEdit i_start=1">
+          <figcaption>SDEdit i_start = 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=3&gt;</div>
-          <figcaption>i_start = 3</figcaption>
+          <img src="/images/5/sd3_braun.png" alt="Braun SDEdit i_start=3">
+          <figcaption>SDEdit i_start = 3</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=5&gt;</div>
-          <figcaption>i_start = 5</figcaption>
+          <img src="/images/5/sd5_braun.png" alt="Braun SDEdit i_start=5">
+          <figcaption>SDEdit i_start = 5</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=7&gt;</div>
-          <figcaption>i_start = 7</figcaption>
+          <img src="/images/5/sd7_braun.png" alt="Braun SDEdit i_start=7">
+          <figcaption>SDEdit i_start = 7</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=10&gt;</div>
-          <figcaption>i_start = 10</figcaption>
+          <img src="/images/5/sd10_braun.png" alt="Braun SDEdit i_start=10">
+          <figcaption>SDEdit i_start = 10</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=20&gt;</div>
-          <figcaption>i_start = 20</figcaption>
-        </figure>
-      </div>
-      <figure style="width: 20%; margin-top: 14px;">
-        <div class="placeholder">&lt;original web image&gt;</div>
-        <figcaption>Original</figcaption>
-      </figure>
-
-      <h3>Hand-Drawn Image 1: &lt;PUT DESCRIPTION HERE&gt;</h3>
-      <div class="grid grid-6">
-        <figure>
-          <div class="placeholder">&lt;i_start=1&gt;</div>
-          <figcaption>i_start = 1</figcaption>
+          <img src="/images/5/sd20_braun.png" alt="Braun SDEdit i_start=20">
+          <figcaption>SDEdit i_start = 20</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=3&gt;</div>
-          <figcaption>i_start = 3</figcaption>
+          <img src="/images/5/braun.png" alt="Braun">
+          <figcaption>Braun (Web)</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=5&gt;</div>
-          <figcaption>i_start = 5</figcaption>
+          <img src="/images/5/sd1_castle.png" alt="Castle SDEdit i_start=1">
+          <figcaption>SDEdit i_start = 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=7&gt;</div>
-          <figcaption>i_start = 7</figcaption>
+          <img src="/images/5/sd3_castle.png" alt="Castle SDEdit i_start=3">
+          <figcaption>SDEdit i_start = 3</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=10&gt;</div>
-          <figcaption>i_start = 10</figcaption>
+          <img src="/images/5/sd5_castle.png" alt="Castle SDEdit i_start=5">
+          <figcaption>SDEdit i_start = 5</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=20&gt;</div>
-          <figcaption>i_start = 20</figcaption>
-        </figure>
-      </div>
-      <figure style="width: 20%; margin-top: 14px;">
-        <div class="placeholder">&lt;original hand-drawn image&gt;</div>
-        <figcaption>Original</figcaption>
-      </figure>
-
-      <h3>Hand-Drawn Image 2: &lt;PUT DESCRIPTION HERE&gt;</h3>
-      <div class="grid grid-6">
-        <figure>
-          <div class="placeholder">&lt;i_start=1&gt;</div>
-          <figcaption>i_start = 1</figcaption>
+          <img src="/images/5/sd7_castle.png" alt="Castle SDEdit i_start=7">
+          <figcaption>SDEdit i_start = 7</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=3&gt;</div>
-          <figcaption>i_start = 3</figcaption>
+          <img src="/images/5/sd10_castle.png" alt="Castle SDEdit i_start=10">
+          <figcaption>SDEdit i_start = 10</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=5&gt;</div>
-          <figcaption>i_start = 5</figcaption>
+          <img src="/images/5/sd20_castle.png" alt="Castle SDEdit i_start=20">
+          <figcaption>SDEdit i_start = 20</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=7&gt;</div>
-          <figcaption>i_start = 7</figcaption>
+          <img src="/images/5/castle.png" alt="Castle">
+          <figcaption>Castle (Hand-Drawn)</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=10&gt;</div>
-          <figcaption>i_start = 10</figcaption>
+          <img src="/images/5/sd1_mountain.png" alt="Mountain SDEdit i_start=1">
+          <figcaption>SDEdit i_start = 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=20&gt;</div>
-          <figcaption>i_start = 20</figcaption>
+          <img src="/images/5/sd3_mountain.png" alt="Mountain SDEdit i_start=3">
+          <figcaption>SDEdit i_start = 3</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/sd5_mountain.png" alt="Mountain SDEdit i_start=5">
+          <figcaption>SDEdit i_start = 5</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/sd7_mountain.png" alt="Mountain SDEdit i_start=7">
+          <figcaption>SDEdit i_start = 7</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/sd10_mountain.png" alt="Mountain SDEdit i_start=10">
+          <figcaption>SDEdit i_start = 10</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/sd20_mountain.png" alt="Mountain SDEdit i_start=20">
+          <figcaption>SDEdit i_start = 20</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/mountain.png" alt="Mountain">
+          <figcaption>Mountain (Hand-Drawn)</figcaption>
         </figure>
       </div>
-      <figure style="width: 20%; margin-top: 14px;">
-        <div class="placeholder">&lt;original hand-drawn image&gt;</div>
-        <figcaption>Original</figcaption>
-      </figure>
     </section>
 
     <!-- Part 1.7.2: Inpainting -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.7.2 — Inpainting</h2>
+      <h2>Part 1.7.2: Inpainting</h2>
       <p>I implemented inpainting by creating a binary mask and using the diffusion model to fill in the masked region while keeping the rest of the image intact.</p>
 
-      <h3>Campanile Inpainting</h3>
-      <div class="grid grid-3">
+      <p>The <code>inpaint</code> function is similar to <code>iterative_denoise_cfg</code> with the key difference being that after each denoising step, we blend the denoised result with the original image using the mask:</p>
+
+      <pre><code class="language-python">def inpaint(original_image, mask, i_start, prompt_embeds, uncond_prompt_embeds,
+            timesteps, scale=7, display=True):
+    image = torch.randn_like(original_image).to(device).half()
+
+    with torch.no_grad():
+        for i in range(i_start, len(timesteps) - 1):
+            # ... same CFG denoising as iterative_denoise_cfg ...
+            # Key difference: after computing pred_prev_image, blend with original
+            if i < len(timesteps) - 2:
+                image = mask * pred_prev_image + (1 - mask) * forward(original_image, prev_t)
+            else:
+                image = mask * pred_prev_image + (1 - mask) * original_image
+
+        clean = image[0].cpu().detach().permute(1, 2, 0) / 2.0 + 0.5
+    return clean</code></pre>
+
+      <h3>Inpainting Results</h3>
+      <div class="grid" style="grid-template-columns: repeat(4, 1fr);">
         <figure>
-          <div class="placeholder">&lt;put original Campanile here&gt;</div>
-          <figcaption>Original</figcaption>
+          <img src="/images/5/campanile.png" alt="Original Campanile">
+          <figcaption>Campanile</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put mask visualization here&gt;</div>
+          <img src="/images/5/mask_campanile.png" alt="Campanile Mask">
           <figcaption>Mask</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put inpainted result here&gt;</div>
+          <img src="/images/5/replace_campanile.png" alt="Campanile with Hole">
+          <figcaption>To Replace</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/in_campanile.png" alt="Inpainted Campanile">
           <figcaption>Inpainted</figcaption>
         </figure>
-      </div>
-
-      <h3>Inpainting Example 2: &lt;PUT IMAGE NAME HERE&gt;</h3>
-      <div class="grid grid-3">
         <figure>
-          <div class="placeholder">&lt;put original image here&gt;</div>
-          <figcaption>Original</figcaption>
+          <img src="/images/5/parthenon.png" alt="Original Parthenon">
+          <figcaption>Parthenon</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put mask visualization here&gt;</div>
+          <img src="/images/5/mask_parthenon.png" alt="Parthenon Mask">
           <figcaption>Mask</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put inpainted result here&gt;</div>
+          <img src="/images/5/replace_parthenon.png" alt="Parthenon with Hole">
+          <figcaption>To Replace</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/in_parthenon.png" alt="Inpainted Parthenon">
           <figcaption>Inpainted</figcaption>
         </figure>
-      </div>
-
-      <h3>Inpainting Example 3: &lt;PUT IMAGE NAME HERE&gt;</h3>
-      <div class="grid grid-3">
         <figure>
-          <div class="placeholder">&lt;put original image here&gt;</div>
-          <figcaption>Original</figcaption>
+          <img src="/images/5/braun.png" alt="Original Braun">
+          <figcaption>Braun</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put mask visualization here&gt;</div>
+          <img src="/images/5/mask_braun.png" alt="Braun Mask">
           <figcaption>Mask</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put inpainted result here&gt;</div>
+          <img src="/images/5/replace_braun.png" alt="Braun with Hole">
+          <figcaption>To Replace</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/in_braun.png" alt="Inpainted Braun">
           <figcaption>Inpainted</figcaption>
         </figure>
       </div>
@@ -575,155 +696,208 @@
 
     <!-- Part 1.7.3: Text-Conditional Image-to-Image Translation -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.7.3 — Text-Conditional Image-to-Image Translation</h2>
-      <p>I guided the projection of images using text prompts instead of "a high quality photo". This allows for creative transformations of the source image based on the prompt.</p>
+      <h2>Part 1.7.3: Text-Conditional Image-to-Image Translation</h2>
+      <p>I guided the projection of images using text prompts instead of "a high quality picture". This allows for creative transformations of the source image based on the prompt.</p>
 
-      <h3>Campanile with Prompt: "&lt;PUT PROMPT HERE&gt;"</h3>
-      <div class="grid grid-6">
+      <h3>Text-Conditional SDEdit Results</h3>
+      <p><strong>Campanile</strong> with prompt: "a photo of a tall ancient tree with deep roots"</p>
+      <div class="grid" style="grid-template-columns: repeat(7, 1fr);">
         <figure>
-          <div class="placeholder">&lt;i_start=1&gt;</div>
-          <figcaption>i_start = 1</figcaption>
+          <img src="/images/5/text1_campanile.png" alt="Campanile Text SDEdit i_start=1">
+          <figcaption>SDEdit i_start = 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=3&gt;</div>
-          <figcaption>i_start = 3</figcaption>
+          <img src="/images/5/text3_campanile.png" alt="Campanile Text SDEdit i_start=3">
+          <figcaption>SDEdit i_start = 3</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=5&gt;</div>
-          <figcaption>i_start = 5</figcaption>
+          <img src="/images/5/text5_campanile.png" alt="Campanile Text SDEdit i_start=5">
+          <figcaption>SDEdit i_start = 5</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=7&gt;</div>
-          <figcaption>i_start = 7</figcaption>
+          <img src="/images/5/text7_campanile.png" alt="Campanile Text SDEdit i_start=7">
+          <figcaption>SDEdit i_start = 7</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=10&gt;</div>
-          <figcaption>i_start = 10</figcaption>
+          <img src="/images/5/text10_campanile.png" alt="Campanile Text SDEdit i_start=10">
+          <figcaption>SDEdit i_start = 10</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=20&gt;</div>
-          <figcaption>i_start = 20</figcaption>
+          <img src="/images/5/text20_campanile.png" alt="Campanile Text SDEdit i_start=20">
+          <figcaption>SDEdit i_start = 20</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/campanile.png" alt="Campanile">
+          <figcaption>Campanile</figcaption>
         </figure>
       </div>
-      <figure style="width: 20%; margin-top: 14px;">
-        <div class="placeholder">&lt;original Campanile&gt;</div>
-        <figcaption>Original</figcaption>
-      </figure>
 
-      <h3>Image 2 with Prompt: "&lt;PUT PROMPT HERE&gt;"</h3>
-      <div class="grid grid-6">
+      <p style="margin-top: 20px;"><strong>Parthenon</strong> with prompt: "a marble sculpture of the thinker statue hunched over sitting on a porcelain toilet"</p>
+      <div class="grid" style="grid-template-columns: repeat(7, 1fr);">
         <figure>
-          <div class="placeholder">&lt;i_start=1&gt;</div>
-          <figcaption>i_start = 1</figcaption>
+          <img src="/images/5/text1_parthenon.png" alt="Parthenon Text SDEdit i_start=1">
+          <figcaption>SDEdit i_start = 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=3&gt;</div>
-          <figcaption>i_start = 3</figcaption>
+          <img src="/images/5/text3_parthenon.png" alt="Parthenon Text SDEdit i_start=3">
+          <figcaption>SDEdit i_start = 3</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=5&gt;</div>
-          <figcaption>i_start = 5</figcaption>
+          <img src="/images/5/text5_parthenon.png" alt="Parthenon Text SDEdit i_start=5">
+          <figcaption>SDEdit i_start = 5</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=7&gt;</div>
-          <figcaption>i_start = 7</figcaption>
+          <img src="/images/5/text7_parthenon.png" alt="Parthenon Text SDEdit i_start=7">
+          <figcaption>SDEdit i_start = 7</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=10&gt;</div>
-          <figcaption>i_start = 10</figcaption>
+          <img src="/images/5/text10_parthenon.png" alt="Parthenon Text SDEdit i_start=10">
+          <figcaption>SDEdit i_start = 10</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=20&gt;</div>
-          <figcaption>i_start = 20</figcaption>
+          <img src="/images/5/text20_parthenon.png" alt="Parthenon Text SDEdit i_start=20">
+          <figcaption>SDEdit i_start = 20</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/parthenon.png" alt="Parthenon">
+          <figcaption>Parthenon</figcaption>
         </figure>
       </div>
-      <figure style="width: 20%; margin-top: 14px;">
-        <div class="placeholder">&lt;original image&gt;</div>
-        <figcaption>Original</figcaption>
-      </figure>
 
-      <h3>Image 3 with Prompt: "&lt;PUT PROMPT HERE&gt;"</h3>
-      <div class="grid grid-6">
+      <p style="margin-top: 20px;"><strong>Bear</strong> with prompt: "a close up photo of a horned owl staring forward"</p>
+      <div class="grid" style="grid-template-columns: repeat(7, 1fr);">
         <figure>
-          <div class="placeholder">&lt;i_start=1&gt;</div>
-          <figcaption>i_start = 1</figcaption>
+          <img src="/images/5/text1_bear.png" alt="Bear Text SDEdit i_start=1">
+          <figcaption>SDEdit i_start = 1</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=3&gt;</div>
-          <figcaption>i_start = 3</figcaption>
+          <img src="/images/5/text3_bear.png" alt="Bear Text SDEdit i_start=3">
+          <figcaption>SDEdit i_start = 3</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=5&gt;</div>
-          <figcaption>i_start = 5</figcaption>
+          <img src="/images/5/text5_bear.png" alt="Bear Text SDEdit i_start=5">
+          <figcaption>SDEdit i_start = 5</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=7&gt;</div>
-          <figcaption>i_start = 7</figcaption>
+          <img src="/images/5/text7_bear.png" alt="Bear Text SDEdit i_start=7">
+          <figcaption>SDEdit i_start = 7</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=10&gt;</div>
-          <figcaption>i_start = 10</figcaption>
+          <img src="/images/5/text10_bear.png" alt="Bear Text SDEdit i_start=10">
+          <figcaption>SDEdit i_start = 10</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;i_start=20&gt;</div>
-          <figcaption>i_start = 20</figcaption>
+          <img src="/images/5/text20_bear.png" alt="Bear Text SDEdit i_start=20">
+          <figcaption>SDEdit i_start = 20</figcaption>
+        </figure>
+        <figure>
+          <img src="/images/5/bear.png" alt="Bear">
+          <figcaption>Bear</figcaption>
         </figure>
       </div>
-      <figure style="width: 20%; margin-top: 14px;">
-        <div class="placeholder">&lt;original image&gt;</div>
-        <figcaption>Original</figcaption>
-      </figure>
     </section>
 
     <!-- Part 1.8: Visual Anagrams -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.8 — Visual Anagrams</h2>
+      <h2>Part 1.8: Visual Anagrams</h2>
       <p>I implemented visual anagrams - optical illusions that show different images depending on orientation. I denoise with one prompt, flip the image, denoise with another prompt, flip back, and average the noise estimates.</p>
 
+      <p>The <code>make_flip_illusion</code> function extends CFG denoising to use two prompts—one for the upright image and one for the flipped version:</p>
+
+      <pre><code class="language-python">def make_flip_illusion(image, i_start, prompt_embeds, uncond_prompt_embeds,
+                       timesteps, scale=7):
+    p1_embeds = prompt_embeds[0:1]  # First prompt (upright)
+    p2_embeds = prompt_embeds[1:2]  # Second prompt (flipped)
+
+    with torch.no_grad():
+        for i in range(i_start, len(timesteps) - 1):
+            # ... compute alpha_cumprod, alpha, beta as before ...
+
+            # CFG noise estimate for upright image with prompt 1
+            eps_1 = uncond_noise_est_1 + scale * (noise_est_1 - uncond_noise_est_1)
+
+            # Flip image, get CFG noise estimate with prompt 2, flip back
+            flipped_image = torch.flip(image, [2])
+            # ... get model outputs for flipped image with p2_embeds ...
+            eps_2_flipped = uncond_noise_est_2 + scale * (noise_est_2 - uncond_noise_est_2)
+            eps_2 = torch.flip(eps_2_flipped, [2])
+
+            # Average the two noise estimates
+            noise_est = (eps_1 + eps_2) / 2.0
+
+            # ... continue with DDPM step using averaged noise_est ...
+    return clean</code></pre>
+
       <h3>Visual Anagram 1</h3>
-      <p>Prompt 1: "&lt;PUT PROMPT 1 HERE&gt;" | Prompt 2 (flipped): "&lt;PUT PROMPT 2 HERE&gt;"</p>
+      <p>Prompt 1: "a photo of a tall ancient tree with deep roots" | Prompt 2 (flipped): "a photo of a tall sci fi rocket ready for launch"</p>
       <div class="grid grid-2">
         <figure>
-          <div class="placeholder">&lt;put upright view here&gt;</div>
-          <figcaption>Upright: &lt;description&gt;</figcaption>
+          <img src="/images/5/illusion_tree.png" alt="Tree illusion">
+          <figcaption>Upright: Tree</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put flipped view here&gt;</div>
-          <figcaption>Upside-Down: &lt;description&gt;</figcaption>
+          <img src="/images/5/illusion_rocket.png" alt="Rocket illusion">
+          <figcaption>Upside-Down: Rocket</figcaption>
         </figure>
       </div>
 
       <h3>Visual Anagram 2</h3>
-      <p>Prompt 1: "&lt;PUT PROMPT 1 HERE&gt;" | Prompt 2 (flipped): "&lt;PUT PROMPT 2 HERE&gt;"</p>
+      <p>Prompt 1: "an oil painting portrait of an old man with a long beard" | Prompt 2 (flipped): "an oil painting of a dramatic waterfall cascading down rocks"</p>
       <div class="grid grid-2">
         <figure>
-          <div class="placeholder">&lt;put upright view here&gt;</div>
-          <figcaption>Upright: &lt;description&gt;</figcaption>
+          <img src="/images/5/illusion_man.png" alt="Old man illusion">
+          <figcaption>Upright: Old Man</figcaption>
         </figure>
         <figure>
-          <div class="placeholder">&lt;put flipped view here&gt;</div>
-          <figcaption>Upside-Down: &lt;description&gt;</figcaption>
+          <img src="/images/5/illusion_waterfall.png" alt="Waterfall illusion">
+          <figcaption>Upside-Down: Waterfall</figcaption>
         </figure>
       </div>
     </section>
 
     <!-- Part 1.9: Hybrid Images -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 1.9 — Hybrid Images</h2>
+      <h2>Part 1.9: Hybrid Images</h2>
       <p>I created hybrid images by combining the low frequencies from one denoised image with the high frequencies from another. The result shows different images depending on viewing distance.</p>
 
+      <p>The <code>make_hybrids</code> function is similar to visual anagrams but instead of flipping, it extracts low frequencies from one prompt's noise estimate and high frequencies from another:</p>
+
+      <pre><code class="language-python">def make_hybrids(image, i_start, prompt_embeds, uncond_prompt_embeds,
+                 timesteps, scale=7):
+    p1_embeds = prompt_embeds[0:1]  # Low-frequency prompt
+    p2_embeds = prompt_embeds[1:2]  # High-frequency prompt
+
+    with torch.no_grad():
+        for i in range(i_start, len(timesteps) - 1):
+            # ... compute alpha_cumprod, alpha, beta as before ...
+
+            # CFG noise estimates for both prompts
+            eps_1 = uncond_noise_est_1 + scale * (noise_est_1 - uncond_noise_est_1)
+            eps_2 = uncond_noise_est_2 + scale * (noise_est_2 - uncond_noise_est_2)
+
+            # Extract low frequencies from eps_1, high frequencies from eps_2
+            eps_low = gaussian_blur(eps_1, kernel_size=33, sigma=2)
+            eps_2_blurred = gaussian_blur(eps_2, kernel_size=33, sigma=2)
+            eps_high = eps_2 - eps_2_blurred
+
+            # Combine low and high frequency components
+            noise_est = eps_low + eps_high
+
+            # ... continue with DDPM step using combined noise_est ...
+    return clean</code></pre>
+
       <h3>Hybrid Image 1</h3>
-      <p>Low-frequency prompt: "&lt;PUT PROMPT HERE&gt;" | High-frequency prompt: "&lt;PUT PROMPT HERE&gt;"</p>
+      <p>Low-frequency prompt: "a hyper realistic paper cutout diorama of a forest" | High-frequency prompt: "a photo of the statue of liberty made of green modeling clay"</p>
       <figure style="width: 50%;">
-        <div class="placeholder">&lt;put hybrid image 1 here&gt;</div>
-        <figcaption>View up close to see the high-frequency image, step back to see the low-frequency image</figcaption>
+        <img src="/images/5/hybrid_fiberty.png" alt="Hybrid forest and liberty">
+        <figcaption>View up close to see the Statue of Liberty, step back to see the forest diorama</figcaption>
       </figure>
 
       <h3>Hybrid Image 2</h3>
-      <p>Low-frequency prompt: "&lt;PUT PROMPT HERE&gt;" | High-frequency prompt: "&lt;PUT PROMPT HERE&gt;"</p>
+      <p>Low-frequency prompt: "a close up photo of a horned owl staring forward" | High-frequency prompt: "a photo of a fluffy cat sitting and looking up"</p>
       <figure style="width: 50%;">
-        <div class="placeholder">&lt;put hybrid image 2 here&gt;</div>
-        <figcaption>View up close to see the high-frequency image, step back to see the low-frequency image</figcaption>
+        <img src="/images/5/hybrid_cowl.png" alt="Hybrid cat and owl">
+        <figcaption>View up close to see the cat, step back to see the owl</figcaption>
       </figure>
     </section>
 
@@ -741,5 +915,8 @@
       <p><a href="../index.html">Back to Projects</a></p>
     </section>
   </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
 </body>
 </html>
