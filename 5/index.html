@@ -886,8 +886,172 @@ predicted_variance = (var_1 + var_2) / 2.0</code></pre>
       <h1 style="font-size: 32px; color: var(--accent); border-bottom: 2px solid var(--accent); display: inline-block; padding-bottom: 8px;">Part B: Diffusion Models from Scratch!</h1>
     </section>
 
-    <section class="card">
-      <div class="placeholder" style="padding: 40px;">&lt;Part B content will go here&gt;</div>
+    <!-- Part 1.2: Using the UNet to Train a Denoiser -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.2: Using the UNet to Train a Denoiser</h2>
+      <p>To train a denoiser, we first need to generate noisy images. Given a clean image <code>x</code> and noise <code>ε</code> sampled from a standard normal distribution, we create a noisy image <code>z = x + σε</code>, where <code>σ</code> controls the noise level. The visualization below shows this noising process at different <code>σ</code> values.</p>
+
+      <h3>Noising Process Visualization</h3>
+      <p>Visualization of the noising process at different noise levels <code>σ = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0]</code>:</p>
+      <figure>
+        <img src="/images/5/noising_process.png" alt="Noising process visualization">
+        <figcaption>Noising process across σ = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0]</figcaption>
+      </figure>
+    </section>
+
+    <!-- Part 1.2.1: Training a Single-Step Denoiser -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.2.1: Training a Single-Step Denoiser</h2>
+      <p>I trained an unconditional UNet to denoise images corrupted with <code>σ = 0.5</code> noise. The model takes in a noisy image and predicts the clean image directly, using MSE loss.</p>
+      <table>
+        <tr><th>Hyperparameter</th><th>Value</th></tr>
+        <tr><td>Batch Size</td><td>128</td></tr>
+        <tr><td>Learning Rate</td><td>1e-4</td></tr>
+        <tr><td>Hidden Dimension</td><td>128</td></tr>
+        <tr><td>Epochs</td><td>5</td></tr>
+      </table>
+
+      <h3>Training Loss Curve</h3>
+      <figure style="max-width: 600px;">
+        <img src="/images/5/1.2.1_training_loss.png" alt="Training loss curve for σ=0.5">
+        <figcaption>Training loss over iterations for σ = 0.5 denoiser</figcaption>
+      </figure>
+
+      <h3>Results on Test Set After Epoch 1</h3>
+      <figure>
+        <img src="/images/5/1.2.1_epoch1_test.png" alt="Test results after epoch 1">
+        <figcaption>Denoising results on test digits after 1 epoch of training</figcaption>
+      </figure>
+
+      <h3>Results on Test Set After Epoch 5</h3>
+      <figure>
+        <img src="/images/5/1.2.1_epoch5_test.png" alt="Test results after epoch 5">
+        <figcaption>Denoising results on test digits after 5 epochs of training</figcaption>
+      </figure>
+    </section>
+
+    <!-- Part 1.2.2: Out-of-Distribution Testing -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.2.2: Out-of-Distribution Testing</h2>
+      <p>I tested the denoiser (trained on <code>σ = 0.5</code>) on images with different noise levels to see how it generalizes. The model performs best at the noise level it was trained on, but struggles with out-of-distribution noise levels - it over-denoises low-noise images and under-denoises high-noise images.</p>
+
+      <h3>Results with Varying Noise Levels</h3>
+      <p>Testing the <code>σ = 0.5</code> trained denoiser on noise levels <code>σ = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0]</code>:</p>
+      <figure>
+        <img src="/images/5/1.2.2_ood_testing.png" alt="Out-of-distribution testing results">
+        <figcaption>Denoising performance across different noise levels (model trained on σ = 0.5)</figcaption>
+      </figure>
+    </section>
+
+    <!-- Part 1.2.3: Denoising Pure Noise -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 1.2.3: Denoising Pure Noise</h2>
+      <p>I trained a new UNet to map pure noise directly to clean images. Unlike part 1.2.1, the input here is just random noise with no signal from the original image. This is essentially trying to generate images from scratch in a single step.</p>
+
+      <h3>Training Loss Curve</h3>
+      <figure style="max-width: 600px;">
+        <img src="/images/5/1.2.3_training_loss.png" alt="Training loss curve for pure noise denoiser">
+        <figcaption>Training loss over iterations for pure noise denoiser</figcaption>
+      </figure>
+
+      <h3>Generated Outputs After Epoch 1</h3>
+      <figure>
+        <img src="/images/5/1.2.3_epoch1_test.png" alt="Generated outputs after epoch 1">
+        <figcaption>Generated samples from pure noise after 1 epoch</figcaption>
+      </figure>
+
+      <h3>Generated Outputs After Epoch 5</h3>
+      <figure>
+        <img src="/images/5/1.2.3_epoch5_test.png" alt="Generated outputs after epoch 5">
+        <figcaption>Generated samples from pure noise after 5 epochs</figcaption>
+      </figure>
+
+      <h3>Analysis</h3>
+      <p>The outputs show blob-like shapes with bright centers - if you squint, you can make out faint curves resembling overlapping digits like 0, 3, 8, and 9. This happens because with MSE loss on pure noise, the model learns to output the centroid of all training images - the single image minimizing squared distance to every digit 0-9. Since the model has no signal to determine which digit to produce, it outputs this "average digit" that captures shared structure but lacks specificity to any particular digit.</p>
+    </section>
+
+    <!-- Part 2.2: Training the Time-Conditioned UNet -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 2.2: Training the Time-Conditioned UNet</h2>
+      <p>I implemented flow matching with a time-conditioned UNet. During training (Algorithm 1), we sample a clean image <code>x_1</code>, pure noise <code>x_0 ~ N(0, I)</code>, and time <code>t ~ U[0, 1]</code>. We interpolate to get <code>x_t = (1-t)x_0 + t*x_1</code> and train the UNet to predict the velocity field <code>v = x_1 - x_0</code>. The time conditioning is injected via FC layers that modulate features after the bottleneck and first upsampling block.</p>
+      <table>
+        <tr><th>Hyperparameter</th><th>Value</th></tr>
+        <tr><td>Batch Size</td><td>64</td></tr>
+        <tr><td>Learning Rate</td><td>1e-2</td></tr>
+        <tr><td>Hidden Dimension</td><td>64</td></tr>
+        <tr><td>Timesteps</td><td>50</td></tr>
+        <tr><td>Epochs</td><td>10</td></tr>
+      </table>
+
+      <h3>Training Loss Curve</h3>
+      <figure style="max-width: 600px;">
+        <img src="/images/5/2.2_training_loss.png" alt="Training loss for time-conditioned UNet">
+        <figcaption>Training loss over iterations for time-conditioned UNet</figcaption>
+      </figure>
+    </section>
+
+    <!-- Part 2.3: Sampling from the Time-Conditioned UNet -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 2.3: Sampling from the Time-Conditioned UNet</h2>
+      <p>To generate images (Algorithm 2), we start with pure noise <code>x_0 ~ N(0, I)</code> and iteratively evolve it toward the data distribution using Euler integration. For each timestep from <code>t = 0</code> to <code>t = 1</code>, we compute <code>x_t = x_t + (1/T) * v(x_t, t)</code>, where <code>v</code> is the predicted velocity from our UNet. After T steps, we arrive at a generated sample.</p>
+
+      <h3>Sampling Results After Epoch 1</h3>
+      <figure>
+        <img src="/images/5/2.3_epoch1_samples.png" alt="Samples after epoch 1">
+        <figcaption>Generated samples after 1 epoch of training</figcaption>
+      </figure>
+
+      <h3>Sampling Results After Epoch 5</h3>
+      <figure>
+        <img src="/images/5/2.3_epoch5_samples.png" alt="Samples after epoch 5">
+        <figcaption>Generated samples after 5 epochs of training</figcaption>
+      </figure>
+
+      <h3>Sampling Results After Epoch 10</h3>
+      <figure>
+        <img src="/images/5/2.3_epoch10_samples.png" alt="Samples after epoch 10">
+        <figcaption>Generated samples after 10 epochs of training</figcaption>
+      </figure>
+    </section>
+
+    <!-- Part 2.4-2.5: Adding Class-Conditioning -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 2.4-2.5: Adding Class-Conditioning to UNet</h2>
+      <p class="placeholder">&lt;Explain adding class conditioning to the UNet to generate specific digits, including classifier-free guidance&gt;</p>
+    </section>
+
+    <!-- Part 2.6: Sampling from the Class-Conditioned UNet -->
+    <section class="card" style="margin-top: 16px;">
+      <h2>Part 2.6: Sampling from the Class-Conditioned UNet</h2>
+      <p class="placeholder">&lt;Explain sampling with class conditioning and CFG&gt;</p>
+
+      <h3>Sampling Results After Epoch 1</h3>
+      <p>4 instances of each digit (0-9) generated after 1 epoch:</p>
+      <figure>
+        <img class="placeholder" src="/images/5/2.6_epoch1_samples.png" alt="Class-conditioned samples after epoch 1">
+        <figcaption>Class-conditioned samples after 1 epoch</figcaption>
+      </figure>
+
+      <h3>Sampling Results After Epoch 5</h3>
+      <p>4 instances of each digit (0-9) generated after 5 epochs:</p>
+      <figure>
+        <img class="placeholder" src="/images/5/2.6_epoch5_samples.png" alt="Class-conditioned samples after epoch 5">
+        <figcaption>Class-conditioned samples after 5 epochs</figcaption>
+      </figure>
+
+      <h3>Sampling Results After Epoch 10</h3>
+      <p>4 instances of each digit (0-9) generated after 10 epochs:</p>
+      <figure>
+        <img class="placeholder" src="/images/5/2.6_epoch10_samples.png" alt="Class-conditioned samples after epoch 10">
+        <figcaption>Class-conditioned samples after 10 epochs</figcaption>
+      </figure>
+
+      <h3>Removing the Exponential Learning Rate Scheduler</h3>
+      <p class="placeholder">&lt;Describe what modifications you made to compensate for removing the exponential learning rate scheduler (e.g., different learning rate, more epochs, different optimizer settings)&gt;</p>
+      <figure>
+        <img class="placeholder" src="/images/5/2.6_no_scheduler.png" alt="Results without exponential LR scheduler">
+        <figcaption>Results after removing exponential LR scheduler (with compensating modifications)</figcaption>
+      </figure>
     </section>
 
     <section class="footer">
