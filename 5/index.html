@@ -926,40 +926,72 @@ noise_est = eps_low + eps_high</code></pre>
     <!-- Part 2.4-2.5: Adding Class-Conditioning -->
     <section class="card" style="margin-top: 16px;">
       <h2>Part 2.4-2.5: Adding Class-Conditioning to UNet</h2>
-      <p class="placeholder">&lt;Explain adding class conditioning to the UNet to generate specific digits, including classifier-free guidance&gt;</p>
+      <p>To generate specific digits, I added class conditioning to the UNet. The class label <code>c</code> is converted to a one-hot vector and passed through FC layers, similar to time conditioning. The class and time embeddings are combined via:</p>
+      <pre><code class="language-python"># Class and time conditioning combined multiplicatively and additively
+x_unflat = c2 * x_unflat + t2  # at bottleneck
+x = c1 * x + t1                 # after first upblock</code></pre>
+      <p>For classifier-free guidance during training, I randomly drop the class condition with probability <code>p_uncond = 0.1</code> by zeroing out the one-hot vector using a mask. This teaches the model to generate both conditionally and unconditionally.</p>
     </section>
 
     <!-- Part 2.6: Sampling from the Class-Conditioned UNet -->
     <section class="card" style="margin-top: 16px;">
       <h2>Part 2.6: Sampling from the Class-Conditioned UNet</h2>
-      <p class="placeholder">&lt;Explain sampling with class conditioning and CFG&gt;</p>
+      <p>During sampling, I use classifier-free guidance by computing both conditional and unconditional velocity predictions, then extrapolating:</p>
+      <pre><code class="language-python"># CFG for class-conditioned sampling
+v = v_uncond + guidance_scale * (v_cond - v_uncond)</code></pre>
+
+      <h3>Training Loss Curve</h3>
+      <figure style="max-width: 600px;">
+        <img src="/images/5/2.6_training_loss.png" alt="Training loss for class-conditioned UNet">
+        <figcaption>Training loss over iterations for class-conditioned UNet</figcaption>
+      </figure>
 
       <h3>Sampling Results After Epoch 1</h3>
       <p>4 instances of each digit (0-9) generated after 1 epoch:</p>
       <figure>
-        <img class="placeholder" src="/images/5/2.6_epoch1_samples.png" alt="Class-conditioned samples after epoch 1">
+        <img src="/images/5/2.6_epoch1_samples.png" alt="Class-conditioned samples after epoch 1">
         <figcaption>Class-conditioned samples after 1 epoch</figcaption>
       </figure>
 
       <h3>Sampling Results After Epoch 5</h3>
       <p>4 instances of each digit (0-9) generated after 5 epochs:</p>
       <figure>
-        <img class="placeholder" src="/images/5/2.6_epoch5_samples.png" alt="Class-conditioned samples after epoch 5">
+        <img src="/images/5/2.6_epoch5_samples.png" alt="Class-conditioned samples after epoch 5">
         <figcaption>Class-conditioned samples after 5 epochs</figcaption>
       </figure>
 
       <h3>Sampling Results After Epoch 10</h3>
       <p>4 instances of each digit (0-9) generated after 10 epochs:</p>
       <figure>
-        <img class="placeholder" src="/images/5/2.6_epoch10_samples.png" alt="Class-conditioned samples after epoch 10">
+        <img src="/images/5/2.6_epoch10_samples.png" alt="Class-conditioned samples after epoch 10">
         <figcaption>Class-conditioned samples after 10 epochs</figcaption>
       </figure>
 
       <h3>Removing the Exponential Learning Rate Scheduler</h3>
-      <p class="placeholder">&lt;Describe what modifications you made to compensate for removing the exponential learning rate scheduler (e.g., different learning rate, more epochs, different optimizer settings)&gt;</p>
+      <p>I removed the exponential learning rate scheduler and did not make any compensating modifications. The results were comparable to those with the scheduler, suggesting the model trains well with a constant learning rate for this task.</p>
+
+      <h4>Training Loss Curve (No Scheduler)</h4>
+      <figure style="max-width: 600px;">
+        <img src="/images/5/2.6_ns_training_loss.png" alt="Training loss without scheduler">
+        <figcaption>Training loss over iterations without exponential LR scheduler</figcaption>
+      </figure>
+
+      <h3>Sampling Results After Epoch 1 (No Scheduler)</h3>
       <figure>
-        <img class="placeholder" src="/images/5/2.6_no_scheduler.png" alt="Results without exponential LR scheduler">
-        <figcaption>Results after removing exponential LR scheduler (with compensating modifications)</figcaption>
+        <img src="/images/5/2.6_ns_epoch1_samples.png" alt="No scheduler samples after epoch 1">
+        <figcaption>Class-conditioned samples after 1 epoch (no scheduler)</figcaption>
+      </figure>
+
+      <h3>Sampling Results After Epoch 5 (No Scheduler)</h3>
+      <figure>
+        <img src="/images/5/2.6_ns_epoch5_samples.png" alt="No scheduler samples after epoch 5">
+        <figcaption>Class-conditioned samples after 5 epochs (no scheduler)</figcaption>
+      </figure>
+
+      <h3>Sampling Results After Epoch 10 (No Scheduler)</h3>
+      <figure>
+        <img src="/images/5/2.6_ns_epoch10_samples.png" alt="No scheduler samples after epoch 10">
+        <figcaption>Class-conditioned samples after 10 epochs (no scheduler)</figcaption>
       </figure>
     </section>
 
