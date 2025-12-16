@@ -923,14 +923,20 @@ noise_est = eps_low + eps_high</code></pre>
       </figure>
     </section>
 
-    <!-- Part 2.4-2.5: Adding Class-Conditioning -->
+    <!-- Part 2.5: Training the Class-Conditioned UNet -->
     <section class="card" style="margin-top: 16px;">
-      <h2>Part 2.4-2.5: Adding Class-Conditioning to UNet</h2>
+      <h2>Part 2.5: Training the Class-Conditioned UNet</h2>
       <p>To generate specific digits, I added class conditioning to the UNet. The class label <code>c</code> is converted to a one-hot vector and passed through FC layers, similar to time conditioning. The class and time embeddings are combined via:</p>
       <pre><code class="language-python"># Class and time conditioning combined multiplicatively and additively
 x_unflat = c2 * x_unflat + t2  # at bottleneck
 x = c1 * x + t1                 # after first upblock</code></pre>
       <p>For classifier-free guidance during training, I randomly drop the class condition with probability <code>p_uncond = 0.1</code> by zeroing out the one-hot vector using a mask. This teaches the model to generate both conditionally and unconditionally.</p>
+
+      <h3>Training Loss Curve</h3>
+      <figure style="max-width: 600px;">
+        <img src="/images/5/2.6_training_loss.png" alt="Training loss for class-conditioned UNet">
+        <figcaption>Training loss over iterations for class-conditioned UNet</figcaption>
+      </figure>
     </section>
 
     <!-- Part 2.6: Sampling from the Class-Conditioned UNet -->
@@ -939,12 +945,6 @@ x = c1 * x + t1                 # after first upblock</code></pre>
       <p>During sampling, I use classifier-free guidance by computing both conditional and unconditional velocity predictions, then extrapolating:</p>
       <pre><code class="language-python"># CFG for class-conditioned sampling
 v = v_uncond + guidance_scale * (v_cond - v_uncond)</code></pre>
-
-      <h3>Training Loss Curve</h3>
-      <figure style="max-width: 600px;">
-        <img src="/images/5/2.6_training_loss.png" alt="Training loss for class-conditioned UNet">
-        <figcaption>Training loss over iterations for class-conditioned UNet</figcaption>
-      </figure>
 
       <h3>Sampling Results After Epoch 1</h3>
       <p>4 instances of each digit (0-9) generated after 1 epoch:</p>
